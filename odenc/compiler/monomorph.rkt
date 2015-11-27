@@ -53,7 +53,7 @@
             [all-monomorphed (hash-union (cadr value-sub) (cadr body-sub) #:combine hash-replace)])
        `((let ([,name ,(car value-sub)])
            ,(car body-sub))
-         all-monomorphed))]
+         ,all-monomorphed))]
     [`(fn (,a) ,b)
      (let ([b-sub (monomorph pdefs b monomorphed (cons a local))])
        `((fn (,a) ,(car b-sub))

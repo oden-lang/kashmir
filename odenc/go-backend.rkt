@@ -27,7 +27,7 @@
     [(? symbol? t) t]))
 
 (define (infix-operator? op)
-  (member op '(+ - * / == != < > <= >=)))
+  (member op '(+ - * / % == != < > <= >=)))
 
 (define (codegen-return typed-expr)
   (match typed-expr

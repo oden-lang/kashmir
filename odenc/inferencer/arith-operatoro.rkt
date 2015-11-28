@@ -26,6 +26,9 @@
           [(membero o '(- * /))
            (membero ot '(int float))
            (== `(,ot -> (,ot -> ,ot)) t)]
+          [(== '% o )
+           (== ot 'int)
+           (== `(,ot -> (,ot -> ,ot)) t)]
           [(membero o '(== !=))
            (membero ot '(int float string))
            (== `(,ot -> (,ot -> bool)) t)]

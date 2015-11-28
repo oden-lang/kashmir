@@ -14,8 +14,8 @@
      (explode `(fn ,(list (car args)) ,(explode `(fn ,(cdr args) ,body))))]
     [`(let ((,s ,v)) ,b)
      `(let ((,s ,(explode v))) ,(explode b))]
-    [`(let ,ps ,b)
-     `(let ,(list (car ps)) ,(explode `(let ,(cdr ps) ,b)))]
+    [`(let ((,s ,v) ,ps ...) ,b)
+     `(let ((,s ,(explode v))) ,(explode `(let ,ps ,b)))]
     [`(if ,c ,a ,b)
      `(if ,(explode c) ,(explode a) ,(explode b))]
     [`(,e : ,t)
@@ -51,6 +51,26 @@
     (check-equal?
      (explode '((+ 1 2) : int))
      '(((+ 1) 2) : int)))
+
+   (test-case "simple let expression"
+    (check-equal?
+     (explode '(let ((n 1)) n))
+     '(let ((n 1)) n)))
+
+   (test-case "simple double let expression"
+     (check-equal?
+      (explode '(let ((n 1) (m 2)) (+ n m)))
+      '(let ((n 1)) (let ((m 2)) ((+ n) m)))))
+
+   (test-case "single complex let expression"
+    (check-equal?
+     (explode '(let ((n (+ 1 2))) n))
+     '(let ((n ((+ 1) 2))) n)))
+
+   (test-case "double complex let expression"
+     (check-equal?
+      (explode '(let ((n (+ 1 2)) (m 5)) (+ n m)))
+      '(let ((n ((+ 1) 2))) (let ((m 5)) ((+ n) m)))))
 
    (test-case "function application"
     (check-equal?

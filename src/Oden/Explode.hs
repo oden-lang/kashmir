@@ -23,6 +23,8 @@ explodeBinding :: Binding -> Untyped.Binding
 explodeBinding (Binding si name) = Untyped.Binding si name
 
 explodeExpr :: Expr -> Untyped.Expr
+explodeExpr (Op1 si o e) =
+  Untyped.Op1 si o (explodeExpr e)
 explodeExpr (Op si o e1 e2) =
   Untyped.Op si o (explodeExpr e1) (explodeExpr e2)
 explodeExpr (Symbol si i) =
@@ -47,6 +49,7 @@ explodeExpr (Fn si [arg] b) =
   Untyped.Fn si (explodeBinding arg) (explodeExpr b)
 explodeExpr (Fn si (arg:args) b) =
   Untyped.Fn si (explodeBinding arg) (explodeExpr (Fn si args b))
+
 -- invalid, but can be handled anyway
 explodeExpr (Let _ [] b) = explodeExpr b
 explodeExpr (Let _ [LetPair si n e] b) =

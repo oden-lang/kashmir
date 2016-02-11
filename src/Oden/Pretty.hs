@@ -21,6 +21,9 @@ rArr = text "->"
 instance Pretty Binding where
   pp (Binding _ name) = text name
 
+instance Pretty UnaryOperator where
+  pp Negate = text "-"
+
 instance Pretty BinaryOperator where
   pp Add = text "+"
   pp Subtract = text "-"
@@ -41,6 +44,7 @@ instance Pretty Identifier where
 
 instance Pretty (Expr t) where
   pp (Symbol _ i _) = pp i
+  pp (Op1 _ op e _) = pp op <+> pp e
   pp (Op _ op e1 e2 _) = pp e1 <+> pp op <+> pp e2
   pp (Application _ f a _) = pp f <> text "(" <> pp a <> text ")"
   pp (NoArgApplication _ f _) = pp f <> text "()"

@@ -197,8 +197,17 @@ infixOp x o = Ex.Infix $ do
   reservedOp x
   return (Op si o)
 
+prefixOp :: String -> UnaryOperator -> Op Expr
+prefixOp x o = Ex.Prefix $ do
+  si <- currentSourceInfo
+  reservedOp x
+  return (Op1 si o)
+
 table :: Operators Expr
 table = [
+    [
+      prefixOp "-" Negate
+    ],
     [
       infixOp "*" Multiply Ex.AssocLeft,
       infixOp "/" Divide Ex.AssocLeft

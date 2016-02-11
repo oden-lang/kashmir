@@ -87,6 +87,8 @@ replace (Poly.TSlice si t) = Poly.TSlice si <$> replace t
 
 instantiateExpr :: Core.Expr Poly.Type
                 -> Instantiate (Core.Expr Poly.Type)
+instantiateExpr (Core.Op1 si o e t) = 
+  Core.Op1 si o <$> instantiateExpr e <*> replace t
 instantiateExpr (Core.Op si o e1 e2 t) =
   Core.Op si o <$> instantiateExpr e1
                <*> instantiateExpr e2

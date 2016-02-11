@@ -158,6 +158,7 @@ infer expr = case expr of
 
   Untyped.Op1 si o e -> do
     rt <- case o of
+              Plus   -> return (TBasic si TInt)
               Negate -> return (TBasic si TInt)
               Not    -> return (TBasic si TBool)
     te <- infer e

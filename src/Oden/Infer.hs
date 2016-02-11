@@ -159,6 +159,7 @@ infer expr = case expr of
   Untyped.Op1 si o e -> do
     rt <- case o of
               Negate -> return (TBasic si TInt)
+              Not    -> return (TBasic si TBool)
     te <- infer e
     uni (getSourceInfo te) (Core.typeOf te) rt
     return (Core.Op1 si o te rt)

@@ -23,6 +23,7 @@ instance Pretty Binding where
 
 instance Pretty UnaryOperator where
   pp Negate = text "-"
+  pp Not    = text "!"
 
 instance Pretty BinaryOperator where
   pp Add = text "+"

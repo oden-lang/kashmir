@@ -206,7 +206,8 @@ prefixOp x o = Ex.Prefix $ do
 table :: Operators Expr
 table = [
     [
-      prefixOp "-" Negate
+      prefixOp "-" Negate,
+      prefixOp "!" Not
     ],
     [
       infixOp "*" Multiply Ex.AssocLeft,

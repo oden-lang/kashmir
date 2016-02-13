@@ -133,9 +133,14 @@ codegenOperator GreaterThanEqual = text ">="
 codegenOperator And = text "&&"
 codegenOperator Or = text "||"
 
+codegenUnaryOperator :: UnaryOperator -> Doc
+codegenUnaryOperator o = text (show o)
+
 codegenExpr :: Expr Mono.Type -> Doc
 codegenExpr (Symbol _ i _) =
   codegenIdentifier i
+codegenExpr (Op1 _ o e _) =
+  parens (codegenUnaryOperator o <+> codegenExpr e)
 codegenExpr (Op _ o e1 e2 _) =
   parens (codegenExpr e1 <+> codegenOperator o <+> codegenExpr e2)
 codegenExpr (Application _ (Symbol _ (Unqualified "not") _) e _) =

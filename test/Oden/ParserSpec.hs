@@ -212,6 +212,15 @@ spec = do
           Symbol (src 1 10) (Unqualified "z")
         ]
 
+    it "parses subscript" $
+      parseExpr "a[b]"
+      `shouldSucceedWith`
+      Subscript (src 1 1)
+        (Symbol (src 1 1) (Unqualified "a"))
+        [(Symbol (src 1 3) (Unqualified "b"))]
+
+
+
   describe "parseTopLevel" $ do
     it "parses type signature" $
       parseTopLevel "x :: int"

@@ -23,6 +23,8 @@ explodeBinding :: Binding -> Untyped.Binding
 explodeBinding (Binding si name) = Untyped.Binding si name
 
 explodeExpr :: Expr -> Untyped.Expr
+explodeExpr (Subscript si a is) =
+  Untyped.Subscript si (explodeExpr a) (map explodeExpr is)
 explodeExpr (UnaryOp si o e) =
   Untyped.UnaryOp si o (explodeExpr e)
 explodeExpr (BinaryOp si o e1 e2) =

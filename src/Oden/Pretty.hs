@@ -46,6 +46,7 @@ instance Pretty Identifier where
 
 instance Pretty (Expr t) where
   pp (Symbol _ i _) = pp i
+  pp (Subscript _ a is _) = pp a <+> (hcat (map (brackets . pp) is))
   pp (UnaryOp _ op e _) = pp op <+> pp e
   pp (BinaryOp _ op e1 e2 _) = pp e1 <+> pp op <+> pp e2
   pp (Application _ f a _) = pp f <> text "(" <> pp a <> text ")"

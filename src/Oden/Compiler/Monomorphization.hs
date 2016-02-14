@@ -140,6 +140,11 @@ monomorph e@(Core.Symbol si ident _) = do
   mt <- getMonoType e
   m <- getMonomorphic ident mt
   return (Core.Symbol si m mt)
+monomorph e@(Core.Subscript si a is _) = do
+  mt <- getMonoType e
+  ma <- monomorph a
+  mis <- mapM monomorph is
+  return (Core.Subscript si ma mis mt)
 monomorph e@(Core.UnaryOp si o e1 _) = do
   mt <- getMonoType e
   me <- monomorph e1

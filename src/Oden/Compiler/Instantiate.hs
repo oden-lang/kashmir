@@ -87,14 +87,18 @@ replace (Poly.TSlice si t) = Poly.TSlice si <$> replace t
 
 instantiateExpr :: Core.Expr Poly.Type
                 -> Instantiate (Core.Expr Poly.Type)
+instantiateExpr (Core.Symbol si i t) =
+  Core.Symbol si i <$> replace t
+instantiateExpr (Core.Subscript si a is t) =
+  Core.Subscript si <$> instantiateExpr a
+                    <*> mapM instantiateExpr is
+                    <*> replace t
 instantiateExpr (Core.UnaryOp si o e t) = 
   Core.UnaryOp si o <$> instantiateExpr e <*> replace t
 instantiateExpr (Core.BinaryOp si o e1 e2 t) =
   Core.BinaryOp si o <$> instantiateExpr e1
                <*> instantiateExpr e2
                <*> replace t
-instantiateExpr (Core.Symbol si i t) =
-  Core.Symbol si i <$> replace t
 instantiateExpr (Core.Application si f p t) =
   Core.Application si <$> instantiateExpr f
                       <*> instantiateExpr p

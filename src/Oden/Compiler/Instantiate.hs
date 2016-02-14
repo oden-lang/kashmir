@@ -89,9 +89,9 @@ instantiateExpr :: Core.Expr Poly.Type
                 -> Instantiate (Core.Expr Poly.Type)
 instantiateExpr (Core.Symbol si i t) =
   Core.Symbol si i <$> replace t
-instantiateExpr (Core.Subscript si a is t) =
+instantiateExpr (Core.Subscript si a i t) =
   Core.Subscript si <$> instantiateExpr a
-                    <*> mapM instantiateExpr is
+                    <*> instantiateExpr i
                     <*> replace t
 instantiateExpr (Core.UnaryOp si o e t) = 
   Core.UnaryOp si o <$> instantiateExpr e <*> replace t

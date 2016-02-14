@@ -9,7 +9,7 @@ data Binding = Binding SourceInfo Name
              deriving (Show, Eq, Ord)
 
 data Expr = Symbol SourceInfo Identifier
-          | Subscript SourceInfo Expr [Expr]
+          | Subscript SourceInfo Expr Expr
           | UnaryOp SourceInfo UnaryOperator Expr
           | BinaryOp SourceInfo BinaryOperator Expr Expr
           | Application SourceInfo Expr [Expr]

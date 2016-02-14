@@ -156,13 +156,13 @@ infer expr = case expr of
   Untyped.Literal si (Untyped.String s) ->
     return (Core.Literal si (Core.String s) (TBasic si TString))
 
-  Untyped.Subscript si a is -> do
+  Untyped.Subscript si a i -> do
 -- This is wrong!!! It makes the result type of the subscripted
 -- slice be the slice type itself. We need to "unwrap" the slice somehow
     at <- infer a
-    tis <- mapM infer is
-    mapM_ (uni si (TBasic si TInt) . Core.typeOf) tis
-    return (Core.Subscript si at tis (Core.typeOf at))
+    ti <- infer i
+    uni (getSourceInfo ti) (Core.typeOf ti) (TBasic si TInt)
+    return (Core.Subscript si at ti (Core.typeOf at))
 
   Untyped.UnaryOp si o e -> do
     rt <- case o of

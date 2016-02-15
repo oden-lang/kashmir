@@ -140,7 +140,16 @@ unitExprOrTuple = do
     (f:s:r) -> return (Tuple si f s r)
 
 term :: Parser Expr
-term =
+term = do
+  si <- currentSourceInfo
+  arrayBase <- termNoArray
+  indices <- many $ (brackets expr >>= return)
+  case indices of
+    [] -> return arrayBase
+    is -> return (Subscript si arrayBase is)
+
+termNoArray :: Parser Expr
+termNoArray =
   try fn
   <|> if'
   <|> let'

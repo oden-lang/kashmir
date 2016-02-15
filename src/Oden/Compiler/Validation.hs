@@ -34,6 +34,9 @@ withName = local . Set.insert
 
 validateExpr :: Expr Type -> Validate ()
 validateExpr Symbol{} = return ()
+validateExpr (Subscript _ a i _) = do
+  validateExpr a
+  validateExpr i
 validateExpr (UnaryOp _ _ rhs _) =
   validateExpr rhs
 validateExpr (BinaryOp _ _ lhs rhs _) = do

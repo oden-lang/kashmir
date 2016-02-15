@@ -156,6 +156,14 @@ infer expr = case expr of
   Untyped.Literal si (Untyped.String s) ->
     return (Core.Literal si (Core.String s) (TBasic si TString))
 
+  Untyped.Subscript si a i -> do
+    at <- infer a
+    ti <- infer i
+    tv <- (fresh . getSourceInfo) i
+    uni si (Core.typeOf at) (TSlice si tv)
+    uni (getSourceInfo ti) (Core.typeOf ti) (TBasic si TInt)
+    return (Core.Subscript si at ti tv)
+
   Untyped.UnaryOp si o e -> do
     rt <- case o of
               Positive   -> return (TBasic si TInt)

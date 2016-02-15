@@ -23,6 +23,10 @@ explodeBinding :: Binding -> Untyped.Binding
 explodeBinding (Binding si name) = Untyped.Binding si name
 
 explodeExpr :: Expr -> Untyped.Expr
+explodeExpr (Subscript si a [i]) =
+  Untyped.Subscript si (explodeExpr a) (explodeExpr i)
+explodeExpr (Subscript si a (i:ir)) =
+  explodeExpr (Subscript si (Subscript si a [i]) ir)
 explodeExpr (UnaryOp si o e) =
   Untyped.UnaryOp si o (explodeExpr e)
 explodeExpr (BinaryOp si o e1 e2) =
@@ -51,6 +55,7 @@ explodeExpr (Fn si (arg:args) b) =
   Untyped.Fn si (explodeBinding arg) (explodeExpr (Fn si args b))
 
 -- invalid, but can be handled anyway
+explodeExpr (Subscript _ a []) = explodeExpr a
 explodeExpr (Let _ [] b) = explodeExpr b
 explodeExpr (Let _ [LetPair si n e] b) =
   Untyped.Let si (explodeBinding n) (explodeExpr e) (explodeExpr b)

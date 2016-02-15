@@ -139,6 +139,8 @@ codegenUnaryOperator o = text (show o)
 codegenExpr :: Expr Mono.Type -> Doc
 codegenExpr (Symbol _ i _) =
   codegenIdentifier i
+codegenExpr (Subscript _ a i _) =
+  codegenExpr a <> (brackets . codegenExpr) i
 codegenExpr (UnaryOp _ o e _) =
   parens (codegenUnaryOperator o <+> codegenExpr e)
 codegenExpr (BinaryOp _ o e1 e2 _) =

@@ -11,6 +11,7 @@ data Binding = Binding SourceInfo Name
 
 data Expr t = Symbol SourceInfo Identifier t
             | Subscript SourceInfo (Expr t) (Expr t) t
+            | Subslice SourceInfo (Expr t) (Expr t) (Expr t) t
             | UnaryOp SourceInfo UnaryOperator (Expr t) t
             | BinaryOp SourceInfo BinaryOperator (Expr t) (Expr t) t
             | Application SourceInfo (Expr t) (Expr t) t
@@ -29,6 +30,7 @@ data Expr t = Symbol SourceInfo Identifier t
 instance HasSourceInfo (Expr t) where
   getSourceInfo (Symbol si _ _)                   = si
   getSourceInfo (Subscript si _ _ _)              = si
+  getSourceInfo (Subslice si _ _ _ _)             = si
   getSourceInfo (UnaryOp si _ _ _)                = si
   getSourceInfo (BinaryOp si _ _ _ _)             = si
   getSourceInfo (Application si _ _ _)            = si
@@ -44,7 +46,8 @@ instance HasSourceInfo (Expr t) where
   getSourceInfo (Block si _ _)                    = si
 
   setSourceInfo si (Symbol _ i t)                   = Symbol si i t
-  setSourceInfo si (Subscript _ b is t)             = Subscript si b is t
+  setSourceInfo si (Subscript _ s i t)              = Subscript si s i t
+  setSourceInfo si (Subslice _ s i1 i2 t)           = Subslice si s i1 i2 t
   setSourceInfo si (UnaryOp _ o r t)                = UnaryOp si o r t
   setSourceInfo si (BinaryOp _ p l r t)             = BinaryOp si p l r t
   setSourceInfo si (Application _ f a t)            = Application si f a t
@@ -62,6 +65,7 @@ instance HasSourceInfo (Expr t) where
 typeOf :: Expr t -> t
 typeOf (Symbol _ _ t) = t
 typeOf (Subscript _ _ _ t) = t
+typeOf (Subslice _ _ _ _ t) = t
 typeOf (UnaryOp _ _ _ t) = t
 typeOf (BinaryOp _ _ _ _ t) = t
 typeOf (Application _ _ _ t) = t

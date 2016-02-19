@@ -217,7 +217,15 @@ spec = do
       `shouldSucceedWith`
       Subscript (src 1 1)
         (Symbol (src 1 1) (Unqualified "a"))
-        [(Symbol (src 1 3) (Unqualified "b"))]
+        [(Singular (Symbol (src 1 3) (Unqualified "b")))]
+
+    it "parses sublices" $
+      parseExpr "a[b:c]"
+      `shouldSucceedWith`
+      Subscript (src 1 1)
+        (Symbol (src 1 1) (Unqualified "a"))
+        [(Range (Symbol (src 1 3) (Unqualified "b"))
+                (Symbol (src 1 5) (Unqualified "c")))]
 
 
 

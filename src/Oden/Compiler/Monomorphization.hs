@@ -140,11 +140,17 @@ monomorph e@(Core.Symbol si ident _) = do
   mt <- getMonoType e
   m <- getMonomorphic ident mt
   return (Core.Symbol si m mt)
-monomorph e@(Core.Subscript si a i _) = do
+monomorph e@(Core.Subscript si s i _) = do
   mt <- getMonoType e
-  ma <- monomorph a
+  ms <- monomorph s
   mi <- monomorph i
-  return (Core.Subscript si ma mi mt)
+  return (Core.Subscript si ms mi mt)
+monomorph e@(Core.Subslice si s i1 i2 _) = do
+  mt <- getMonoType e
+  ms <- monomorph s
+  mi1 <- monomorph i1
+  mi2 <- monomorph i2
+  return (Core.Subslice si ms mi1 mi2 mt)
 monomorph e@(Core.UnaryOp si o e1 _) = do
   mt <- getMonoType e
   me <- monomorph e1

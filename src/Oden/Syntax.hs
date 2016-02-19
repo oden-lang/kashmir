@@ -11,7 +11,7 @@ data LetPair = LetPair SourceInfo Binding Expr
              deriving (Show, Eq, Ord)
 
 data Expr = Symbol SourceInfo Identifier
-          | Subscript SourceInfo Expr [Expr]
+          | Subscript SourceInfo Expr [Subscript]
           | UnaryOp SourceInfo UnaryOperator Expr
           | BinaryOp SourceInfo BinaryOperator Expr Expr
           | Application SourceInfo Expr [Expr]
@@ -23,6 +23,10 @@ data Expr = Symbol SourceInfo Identifier
           | Tuple SourceInfo Expr Expr [Expr]
           | Block SourceInfo [Expr]
           deriving (Show, Eq, Ord)
+
+data Subscript = Singular Expr
+               | Range Expr Expr
+               deriving (Show, Eq, Ord)
 
 data Literal = Int Integer
              | Bool Bool

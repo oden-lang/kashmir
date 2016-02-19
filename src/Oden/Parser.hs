@@ -139,17 +139,23 @@ unitExprOrTuple = do
     [e]     -> return e
     (f:s:r) -> return (Tuple si f s r)
 
+subscript :: Parser Subscript
+subscript = try range <|> simple
+  where
+    range = Range <$> expr <*> (char ':' *> expr)
+    simple = Singular <$> expr
+
 term :: Parser Expr
 term = do
   si <- currentSourceInfo
-  arrayBase <- termNoArray
-  indices <- many $ (brackets expr >>= return)
+  basicTerm <- termNoSlice
+  indices <- many $ (brackets subscript >>= return)
   case indices of
-    [] -> return arrayBase
-    is -> return (Subscript si arrayBase is)
+    [] -> return basicTerm
+    is -> return (Subscript si basicTerm is)
 
-termNoArray :: Parser Expr
-termNoArray =
+termNoSlice :: Parser Expr
+termNoSlice =
   try fn
   <|> if'
   <|> let'

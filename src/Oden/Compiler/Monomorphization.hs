@@ -156,11 +156,11 @@ monomorph e@(Core.Subscript si s i _) = do
   ms <- monomorph s
   mi <- monomorph i
   return (Core.Subscript si ms mi mt)
-monomorph e@(Core.Subslice si s i1 i2 _) = do
+monomorph e@(Core.Subslice si s maybei1 maybei2 _) = do
   mt <- getMonoType e
   ms <- monomorph s
-  mi1 <- monomorph i1
-  mi2 <- monomorph i2
+  mi1 <- mapM monomorph maybei1
+  mi2 <- mapM monomorph maybei2
   return (Core.Subslice si ms mi1 mi2 mt)
 monomorph e@(Core.UnaryOp si o e1 _) = do
   mt <- getMonoType e

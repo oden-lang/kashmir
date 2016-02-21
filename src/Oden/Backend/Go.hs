@@ -142,7 +142,9 @@ codegenExpr (Symbol _ i _) =
 codegenExpr (Subscript _ s i _) =
   codegenExpr s <> (brackets . codegenExpr) i
 codegenExpr (Subslice _ s i1 i2 _) =
-  codegenExpr s <> (brackets $ hcat $ punctuate (text ":") $ map codegenExpr [i1, i2])
+  codegenExpr s <> (brackets $ (maybe empty codegenExpr i1) <+>
+                               (text ":") <+>
+                               (maybe empty codegenExpr i2))
 codegenExpr (UnaryOp _ o e _) =
   parens (codegenUnaryOperator o <+> codegenExpr e)
 codegenExpr (BinaryOp _ o e1 e2 _) =

@@ -10,7 +10,7 @@ data NameBinding = NameBinding SourceInfo Name
 
 data Expr = Symbol SourceInfo Identifier
           | Subscript SourceInfo Expr Expr
-          | Subslice SourceInfo Expr Expr Expr
+          | Subslice SourceInfo Expr (Maybe Expr) (Maybe Expr)
           | UnaryOp SourceInfo UnaryOperator Expr
           | BinaryOp SourceInfo BinaryOperator Expr Expr
           | Application SourceInfo Expr [Expr]

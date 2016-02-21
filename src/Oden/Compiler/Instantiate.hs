@@ -93,10 +93,10 @@ instantiateExpr (Core.Subscript si s i t) =
   Core.Subscript si <$> instantiateExpr s
                     <*> instantiateExpr i
                     <*> replace t
-instantiateExpr (Core.Subslice si s i1 i2 t) =
+instantiateExpr (Core.Subslice si s maybei1 maybei2 t) =
   Core.Subslice si <$> instantiateExpr s
-                   <*> instantiateExpr i1
-                   <*> instantiateExpr i2
+                   <*> mapM instantiateExpr maybei1
+                   <*> mapM instantiateExpr maybei2
                    <*> replace t
 instantiateExpr (Core.UnaryOp si o e t) = 
   Core.UnaryOp si o <$> instantiateExpr e <*> replace t

@@ -164,7 +164,7 @@ infer expr = case expr of
     uni (getSourceInfo it) (Core.typeOf it) (TBasic si TInt)
     return (Core.Subscript si st it tv)
 
-  Untyped.Subslice si s i1 i2 -> do
+  Untyped.Subslice si s (Just i1) (Just i2) -> do
     st <- infer s
     i1t <- infer i1
     i2t <- infer i2
@@ -172,7 +172,25 @@ infer expr = case expr of
     uni (getSourceInfo st) (Core.typeOf st) (TSlice (getSourceInfo s) tv)
     uni (getSourceInfo i1t) (Core.typeOf i1t) (TBasic si TInt)
     uni (getSourceInfo i2t) (Core.typeOf i2t) (TBasic si TInt)
-    return (Core.Subslice si st i1t i2t (TSlice si tv))
+    return (Core.Subslice si st (Just i1t) (Just i2t) (TSlice si tv))
+
+  Untyped.Subslice si s Nothing (Just i2) -> do
+    st <- infer s
+    i2t <- infer i2
+    tv <- fresh si
+    uni (getSourceInfo st) (Core.typeOf st) (TSlice (getSourceInfo s) tv)
+    uni (getSourceInfo i2t) (Core.typeOf i2t) (TBasic si TInt)
+    return (Core.Subslice si st Nothing (Just i2t) (TSlice si tv))
+
+  Untyped.Subslice si s (Just i1) Nothing -> do
+    st <- infer s
+    i1t <- infer i1
+    tv <- fresh si
+    uni (getSourceInfo st) (Core.typeOf st) (TSlice (getSourceInfo s) tv)
+    uni (getSourceInfo i1t) (Core.typeOf i1t) (TBasic si TInt)
+    return (Core.Subslice si st (Just i1t) Nothing (TSlice si tv))
+
+-- Untyped.Subslice si s Nothing Nothing -> should never happen
 
   Untyped.UnaryOp si o e -> do
     rt <- case o of

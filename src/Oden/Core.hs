@@ -11,7 +11,7 @@ data Binding = Binding SourceInfo Name
 
 data Expr t = Symbol SourceInfo Identifier t
             | Subscript SourceInfo (Expr t) (Expr t) t
-            | Subslice SourceInfo (Expr t) (Expr t) (Expr t) t
+            | Subslice SourceInfo (Expr t) (Maybe (Expr t)) (Maybe (Expr t)) t
             | UnaryOp SourceInfo UnaryOperator (Expr t) t
             | BinaryOp SourceInfo BinaryOperator (Expr t) (Expr t) t
             | Application SourceInfo (Expr t) (Expr t) t

@@ -37,10 +37,10 @@ validateExpr Symbol{} = return ()
 validateExpr (Subscript _ s i _) = do
   validateExpr s
   validateExpr i
-validateExpr (Subslice _ s i1 i2 _) = do
+validateExpr (Subslice _ s maybei1 maybei2 _) = do
   validateExpr s
-  validateExpr i1
-  validateExpr i2
+  mapM_ validateExpr maybei1
+  mapM_ validateExpr maybei2
 validateExpr (UnaryOp _ _ rhs _) =
   validateExpr rhs
 validateExpr (BinaryOp _ _ lhs rhs _) = do

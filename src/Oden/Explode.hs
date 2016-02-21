@@ -23,10 +23,12 @@ explodeBinding :: Binding -> Untyped.Binding
 explodeBinding (Binding si name) = Untyped.Binding si name
 
 explodeExpr :: Expr -> Untyped.Expr
-explodeExpr (Subscript si es [Singular e]) =
-  Untyped.Subscript si (explodeExpr es) (explodeExpr e)
-explodeExpr (Subscript si es [Range e1 e2]) =
-  Untyped.Subslice si (explodeExpr es) (explodeExpr e1) (explodeExpr e2)
+explodeExpr (Subscript si es [sub]) =
+  case sub of
+    Singular e  -> Untyped.Subscript si (explodeExpr es) (explodeExpr e)
+    Range e1 e2 -> Untyped.Subslice si (explodeExpr es) (Just $ explodeExpr e1) (Just $ explodeExpr e2)
+    OpenStart e -> Untyped.Subslice si (explodeExpr es) Nothing (Just $ explodeExpr e)
+    OpenEnd e   -> Untyped.Subslice si (explodeExpr es) (Just $ explodeExpr e) Nothing
 explodeExpr (Subscript si es (i:ir)) =
   explodeExpr (Subscript si (Subscript si es [i]) ir)
 

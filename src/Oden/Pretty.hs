@@ -47,7 +47,9 @@ instance Pretty Identifier where
 instance Pretty (Expr t) where
   pp (Symbol _ i _) = pp i
   pp (Subscript _ s i _) = pp s <> text "[" <> pp i <> text "]"
-  pp (Subslice _ s i1 i2 _) = pp s <> text "[" <> pp i1 <> text ":" <> pp i2 <> text "]"
+  pp (Subslice _ s maybei1 maybei2 _) = pp s <> (brackets $ (maybe empty pp maybei1) <+>
+                                                            text ":" <+>
+                                                            (maybe empty pp maybei2))
   pp (UnaryOp _ op e _) = pp op <+> pp e
   pp (BinaryOp _ op e1 e2 _) = pp e1 <+> pp op <+> pp e2
   pp (Application _ f a _) = pp f <> text "(" <> pp a <> text ")"

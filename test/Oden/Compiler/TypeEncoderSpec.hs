@@ -20,7 +20,9 @@ spec =
     it "encodes nested single arrows" $
       encodeTypeInstance (Unqualified "foo") (TNoArgFn Missing (TNoArgFn Missing (TBasic Missing TInt))) `shouldBe` "foo_inst_to_to__int"
     it "encodes uncurried func" $
-      encodeTypeInstance (Unqualified "foo") (TUncurriedFn Missing [TBasic Missing TBool, TBasic Missing TInt] (TBasic Missing TString)) `shouldBe` "foo_inst_bool_to_int_to_string"
+      encodeTypeInstance (Unqualified "foo") (TUncurriedFn Missing [TBasic Missing TBool, TBasic Missing TInt] [TBasic Missing TString]) `shouldBe` "foo_inst_bool_to_int_to_string"
+    it "encodes uncurried funcs with multipe return values" $
+      encodeTypeInstance (Unqualified "foo") (TUncurriedFn Missing [TBasic Missing TBool, TBasic Missing TInt] [TBasic Missing TString, TBasic Missing TInt]) `shouldBe` "foo_inst_bool_to_int_to_tupleof__string__int__"
     it "encodes variadic func" $
       encodeTypeInstance (Unqualified "foo") (TVariadicFn Missing [TBasic Missing TBool] (TBasic Missing TInt) (TBasic Missing TString)) `shouldBe` "foo_inst_bool_to_variadic_int_to_string"
     it "encodes slice" $

@@ -130,10 +130,14 @@ codegenType (Mono.TFn _ d r) = do
 codegenType (Mono.TSlice _ t) = do
   tc <- codegenType t
   return $ text "[]" <> tc
-codegenType (Mono.TUncurriedFn _ as r) = do
+codegenType (Mono.TUncurriedFn _ as [r]) = do
   as' <- mapM codegenType as
   rc <- codegenType r
   return $ func empty (hcat (punctuate (comma <+> space) as')) rc empty
+codegenType (Mono.TUncurriedFn _ as rs) = do
+  as' <- mapM codegenType as
+  rcs <- mapM codegenType rs
+  return $ func empty (hcat (punctuate (comma <+> space) as')) (braces (hcat (punctuate (text ",") rcs))) empty
 codegenType (Mono.TVariadicFn _ as v r) = do
   as' <- mapM codegenType as
   vc <- codegenType v

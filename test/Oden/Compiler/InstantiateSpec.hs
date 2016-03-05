@@ -50,7 +50,7 @@ lenPoly :: Core.Expr Poly.Type
 lenPoly = Core.Symbol Missing (Unqualified "len") lenType
 
 lenIntType :: Mono.Type
-lenIntType = Mono.TUncurriedFn Missing [Mono.TSlice Missing monoInt] monoInt
+lenIntType = Mono.TUncurriedFn Missing [Mono.TSlice Missing monoInt] [monoInt]
 
 lenInt :: Core.Expr Poly.Type
 lenInt =

@@ -169,7 +169,7 @@ sliceLenMonomorphed =
     monoInt
     (Core.UncurriedFnApplication
      Missing
-     (Core.Symbol Missing (Unqualified "len") (Mono.TUncurriedFn Missing [Mono.TSlice Missing monoBool] monoInt))
+     (Core.Symbol Missing (Unqualified "len") (Mono.TUncurriedFn Missing [Mono.TSlice Missing monoBool] [monoInt]))
      [Core.Slice Missing [Core.Literal Missing (Core.Bool True) monoBool] (Mono.TSlice Missing (Mono.TBasic Missing TBool))]
      monoInt)
 

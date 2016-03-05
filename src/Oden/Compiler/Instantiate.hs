@@ -28,7 +28,7 @@ monoToPoly (Mono.TTuple si f s r) = Poly.TTuple si (monoToPoly f) (monoToPoly s)
 monoToPoly (Mono.TCon si d r) = Poly.TCon si (monoToPoly d) (monoToPoly r)
 monoToPoly (Mono.TNoArgFn si f) = Poly.TNoArgFn si (monoToPoly f)
 monoToPoly (Mono.TFn si f p) = Poly.TFn si (monoToPoly f) (monoToPoly p)
-monoToPoly (Mono.TUncurriedFn si as r) = Poly.TUncurriedFn si (map monoToPoly as) [monoToPoly r]
+monoToPoly (Mono.TUncurriedFn si as r) = Poly.TUncurriedFn si (map monoToPoly as) (map monoToPoly r)
 monoToPoly (Mono.TVariadicFn si as v r) = Poly.TVariadicFn si (map monoToPoly as) (monoToPoly v) (monoToPoly r)
 monoToPoly (Mono.TSlice si t) = Poly.TSlice si (monoToPoly t)
 monoToPoly (Mono.TStruct si fs) = Poly.TStruct si (map fieldMonoToPoly fs)
@@ -52,10 +52,10 @@ getSubstitutions (Poly.TFn _ pf pp) (Mono.TFn _ mf mp) = do
   ps <- getSubstitutions pp mp
   return (fs `mappend` ps)
 getSubstitutions (Poly.TVar _ v) mono = Right (Map.singleton v (monoToPoly mono))
-getSubstitutions (Poly.TUncurriedFn _ pas (pr:_)) (Mono.TUncurriedFn _ mas mr) = do
+getSubstitutions (Poly.TUncurriedFn _ pas prs) (Mono.TUncurriedFn _ mas mrs) = do
   as <- zipWithM getSubstitutions pas mas
-  r <- getSubstitutions pr mr
-  return (foldl mappend r as)
+  rs <- zipWithM getSubstitutions prs mrs
+  return (mconcat (rs ++ as))
 getSubstitutions (Poly.TVariadicFn _ pas pv pr) (Mono.TVariadicFn _ mas mv mr) = do
   as <- zipWithM getSubstitutions pas mas
   r <- getSubstitutions pr mr

@@ -134,9 +134,9 @@ toMonomorphic (TCon si d r) = Mono.TCon si <$> toMonomorphic d <*> toMonomorphic
 toMonomorphic (TNoArgFn si t) = Mono.TNoArgFn si <$> toMonomorphic t
 toMonomorphic (TFn si tx ty) = Mono.TFn si <$> toMonomorphic tx
                                            <*> toMonomorphic ty
-toMonomorphic (TUncurriedFn si a (r:_)) =
+toMonomorphic (TUncurriedFn si a rs) =
   Mono.TUncurriedFn si <$> mapM toMonomorphic a
-                       <*> toMonomorphic r
+                       <*> mapM toMonomorphic rs
 toMonomorphic (TVariadicFn si a v r) =
   Mono.TVariadicFn si <$> mapM toMonomorphic a
                       <*> toMonomorphic v

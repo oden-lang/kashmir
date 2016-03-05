@@ -317,9 +317,14 @@ infer expr = case expr of
     tv <- fresh si
     tf <- infer f
     case Core.typeOf tf of
-      t@TUncurriedFn{} -> do
-        -- TODO: MULTIVALUE
+      t@(TUncurriedFn _ _ [_]) -> do
         uni (getSourceInfo tf) t (TUncurriedFn (getSourceInfo tf) [] [tv])
+        return (Core.UncurriedFnApplication si tf [] tv)
+      TUncurriedFn si _ (r1:r2:rs) -> do
+        -- Functions with multipe return values are really returning a
+        -- slice when executed
+        uni (getSourceInfo tf) (TUncurriedFn (getSourceInfo tf) [] [TTuple si r1 r2 rs])
+                               (TUncurriedFn (getSourceInfo tf) [] [tv])
         return (Core.UncurriedFnApplication si tf [] tv)
       -- No-param application of variadic function is automatically transformed
       -- to application of empty slice.

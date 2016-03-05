@@ -103,7 +103,8 @@ instance Pretty Poly.Type where
   pp (Poly.TCon _ d r) = pp d <> parens (pp r)
   pp (Poly.TNoArgFn _ t) = rArr <+> pp t
   pp (Poly.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (Poly.TUncurriedFn _ as r) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
+  pp (Poly.TUncurriedFn _ as [r]) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
+  pp (Poly.TUncurriedFn _ as rs) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> braces (hsep (punctuate (text "&") (map pp rs)))
   pp (Poly.TVariadicFn _ as v r) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
   pp (Poly.TSlice _ t) =
     text "[]" <> braces (pp t)

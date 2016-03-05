@@ -44,7 +44,7 @@ identityInt =
   (Poly.TFn Missing typeInt typeInt)
 
 lenType :: Poly.Type
-lenType = Poly.TUncurriedFn Missing [Poly.TSlice Missing tvarA] typeInt
+lenType = Poly.TUncurriedFn Missing [Poly.TSlice Missing tvarA] [typeInt]
 
 lenPoly :: Core.Expr Poly.Type
 lenPoly = Core.Symbol Missing (Unqualified "len") lenType
@@ -57,7 +57,7 @@ lenInt =
   Core.Symbol
   Missing
   (Unqualified "len")
-  (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeInt] typeInt)
+  (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeInt] [typeInt])
 
 pairPoly :: Core.Expr Poly.Type
 pairPoly =

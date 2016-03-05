@@ -157,7 +157,7 @@ sliceLenDef =
     (Poly.Forall Missing [] typeInt,
      Core.UncurriedFnApplication
       Missing
-      (Core.Symbol Missing (Unqualified "len") (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeBool] typeInt))
+      (Core.Symbol Missing (Unqualified "len") (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeBool] [typeInt]))
       [Core.Slice Missing [Core.Literal Missing (Core.Bool True) typeBool] (Poly.TSlice Missing typeBool)]
       typeInt)
 

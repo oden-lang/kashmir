@@ -318,7 +318,8 @@ infer expr = case expr of
     tf <- infer f
     case Core.typeOf tf of
       t@TUncurriedFn{} -> do
-        uni (getSourceInfo tf) t (TUncurriedFn (getSourceInfo tf) [] tv)
+        -- TODO: MULTIVALUE
+        uni (getSourceInfo tf) t (TUncurriedFn (getSourceInfo tf) [] [tv])
         return (Core.UncurriedFnApplication si tf [] tv)
       -- No-param application of variadic function is automatically transformed
       -- to application of empty slice.
@@ -337,7 +338,8 @@ infer expr = case expr of
       t@TUncurriedFn{} -> do
         tv <- fresh (getSourceInfo t)
         tps <- mapM infer ps
-        uni (getSourceInfo tf) t (TUncurriedFn si (map Core.typeOf tps) tv)
+        -- TODO: MULTIVALUE
+        uni (getSourceInfo tf) t (TUncurriedFn si (map Core.typeOf tps) [tv])
         return (Core.UncurriedFnApplication si tf tps tv)
       t@(TVariadicFn _ nonVariadicTypes variadicType _) -> do
         tv <- fresh (getSourceInfo t)
@@ -517,7 +519,7 @@ normalize (Forall si _ exprType, te) = (Forall si tvarBindings (normtype exprTyp
     fv (TVar _ a)             = [a]
     fv (TNoArgFn _ a)         = fv a
     fv (TFn _ a b)            = fv a ++ fv b
-    fv (TUncurriedFn _ as r)  = concatMap fv as ++ fv r
+    fv (TUncurriedFn _ as r)  = concatMap fv as ++ concatMap fv r
     fv (TVariadicFn _ as v r) = concatMap fv as ++ fv v ++ fv r
     fv (TCon _ d r)           = fv d ++ fv r
     fv (TSlice _ t)           = fv t
@@ -531,7 +533,7 @@ normalize (Forall si _ exprType, te) = (Forall si tvarBindings (normtype exprTyp
     normtype (TTuple si' f s r)       = TTuple si' (normtype f) (normtype s) (map normtype r)
     normtype (TNoArgFn si' a)         = TNoArgFn si' (normtype a)
     normtype (TFn si' a b)            = TFn si' (normtype a) (normtype b)
-    normtype (TUncurriedFn si' as r)  = TUncurriedFn si' (map normtype as) (normtype r)
+    normtype (TUncurriedFn si' as r)  = TUncurriedFn si' (map normtype as) (map normtype r)
     normtype (TVariadicFn si' as v r) = TVariadicFn si' (map normtype as) (normtype v) (normtype r)
     normtype (TCon si' d r)           = TCon si' (normtype d) (normtype r)
     normtype (TSlice si' a)           = TSlice si' (normtype a)
@@ -579,7 +581,7 @@ unifies si (TFn _ t1 t2) (TFn _ t3 t4) = unifyMany si [t1, t2] [t3, t4]
 unifies si (TNoArgFn _ t1) (TNoArgFn _ t2) = unifies si t1 t2
 unifies si (TUncurriedFn _ as1 r1) (TUncurriedFn _ as2 r2) = do
   a <- unifyMany si as1 as2
-  r <- unifies si r1 r2
+  r <- unifyMany si r1 r2
   return (a `compose` r)
 unifies si (TVariadicFn _ as1 v1 r1) (TVariadicFn _ as2 v2 r2) = do
   a <- unifyMany si as1 as2

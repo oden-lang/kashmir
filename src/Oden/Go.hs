@@ -11,7 +11,6 @@ module Oden.Go (
   getPackageDefinitions
 ) where
 
-
 import qualified Oden.Core                  as Core
 import           Oden.Go.Types              as G
 import           Oden.Identifier
@@ -129,14 +128,11 @@ convertType Interface{} = Right $ Poly.TAny Missing
 convertType (Signature _ (Just _) _ _) = Left "Methods (functions with receivers)"
 convertType (Signature False Nothing args []) = do
   as <- mapM convertType args
-  Right (Poly.TUncurriedFn Missing as (Poly.TUnit Missing))
-convertType (Signature False Nothing args [ret]) = do
+  Right (Poly.TUncurriedFn Missing as [Poly.TUnit Missing])
+convertType (Signature False Nothing args ret) = do
   as <- mapM convertType args
-  r <- convertType ret
+  r <- mapM convertType ret
   Right (Poly.TUncurriedFn Missing as r)
-convertType (Signature False Nothing args _) = do
-  as <- mapM convertType args
-  Right (Poly.TUncurriedFn Missing as (Poly.TUnit Missing))
 convertType (Signature True Nothing [] []) = Left "Variadic functions with no arguments"
 convertType (Signature True Nothing args []) = do
   as <- mapM convertType (init args)

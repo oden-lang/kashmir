@@ -104,7 +104,7 @@ predefAndStringLength =  predef `extend` ("stringLength",
 
 predefAndMax :: TypingEnvironment
 predefAndMax =  predef `extend` ("max",
-                                 Local Predefined "max" $ forall [] (typeUncurried [typeInt, typeInt] typeInt))
+                                 Local Predefined "max" $ forall [] (typeUncurried [typeInt, typeInt] [typeInt]))
 
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` ("max",
@@ -112,7 +112,7 @@ predefAndMaxVariadic = predef `extend` ("max",
 
 predefAndIdentityAny :: TypingEnvironment
 predefAndIdentityAny = predef `extend` ("identity",
-                                        Local Predefined "identity" $ forall [] (typeUncurried [typeAny] (typeAny)))
+                                        Local Predefined "identity" $ forall [] (typeUncurried [typeAny] ([typeAny])))
 
 booleanOp :: Type
 booleanOp = typeFn typeBool (typeFn typeBool typeBool)
@@ -299,7 +299,7 @@ spec = do
       `shouldSucceedWith`
       (forall [] typeAny,
        tUncurriedFnApplication
-        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
         [tLiteral (tBool False) typeBool]
         typeAny)
 
@@ -329,9 +329,9 @@ spec = do
       `shouldSucceedWith`
       (forall [] typeAny,
        tUncurriedFnApplication
-        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
         [tUncurriedFnApplication
-         (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+         (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
          [tLiteral (tBool False) typeBool]
          typeAny]
         typeAny)
@@ -375,7 +375,7 @@ spec = do
       inferExpr predef (uApplication (uSymbol (Unqualified "len")) [uSlice [uLiteral (uBool True)]])
       `shouldSucceedWith`
       (forall [] (TBasic Predefined TInt),
-       tUncurriedFnApplication (Core.Symbol Missing (Unqualified "len") (TUncurriedFn Missing [TSlice Predefined (TBasic Missing TBool)] (TBasic Predefined TInt)))
+       tUncurriedFnApplication (Core.Symbol Missing (Unqualified "len") (TUncurriedFn Missing [TSlice Predefined (TBasic Missing TBool)] [TBasic Predefined TInt]))
                               [Core.Slice Missing [Core.Literal Missing (tBool True) typeBool] (typeSlice typeBool)]
        (TBasic Predefined TInt))
 
@@ -385,7 +385,7 @@ spec = do
                                                   ,uLiteral (uInt 1)])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeUncurried [typeInt, typeInt] typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeUncurried [typeInt, typeInt] [typeInt]))
                               [tLiteral (tInt 0) typeInt
                               ,tLiteral (tInt 1) typeInt]
        typeInt)

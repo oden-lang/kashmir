@@ -12,7 +12,7 @@ import qualified Data.Map as Map
 
 pairs :: [(Name, Scheme)]
 pairs = [
-  ("len", Forall Predefined [TVarBinding Predefined (TV "a")] (TUncurriedFn Predefined [TSlice Predefined (TVar Predefined (TV "a"))] (TBasic Predefined TInt)))
+  ("len", Forall Predefined [TVarBinding Predefined (TV "a")] (TUncurriedFn Predefined [TSlice Predefined (TVar Predefined (TV "a"))] [TBasic Predefined TInt]))
   ]
 
 predefined :: Map.Map Name Core.Definition

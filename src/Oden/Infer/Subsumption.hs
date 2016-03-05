@@ -41,7 +41,7 @@ collectSubstitutions (TFn _ a1 r1) (TFn _ a2 r2) = do
   collectSubstitutions r1 r2
 collectSubstitutions (TNoArgFn _ r1) (TNoArgFn _ r2) = collectSubstitutions r1 r2
 collectSubstitutions (TUncurriedFn _ a1 r1) (TUncurriedFn _ a2 r2) =
-  mapM_ (uncurry collectSubstitutions) ((r1, r2) : zip a1 a2)
+  mapM_ (uncurry collectSubstitutions) ((zip r1 r2) ++ (zip a1 a2))
 collectSubstitutions (TVariadicFn _ a1 v1 r1) (TVariadicFn _ a2 v2 r2) =
   mapM_ (uncurry collectSubstitutions) ((r1, r2) : (v1, v2) : zip a1 a2)
 collectSubstitutions (TSlice _ t1) (TSlice _ t2) = collectSubstitutions t1 t2

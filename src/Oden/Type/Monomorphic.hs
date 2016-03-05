@@ -15,8 +15,8 @@ data Type
   | TSlice (Metadata SourceInfo) Type
   | TRecord (Metadata SourceInfo) Type
   | TNamed (Metadata SourceInfo) QualifiedName Type
-  | TUncurriedFn (Metadata SourceInfo) [Type] Type
-  | TVariadicFn (Metadata SourceInfo) [Type] Type Type
+  | TUncurriedFn (Metadata SourceInfo) [Type] [Type]
+  | TVariadicFn (Metadata SourceInfo) [Type] Type [Type]
   -- Row
   | REmpty (Metadata SourceInfo)
   | RExtension (Metadata SourceInfo) Identifier Type Type

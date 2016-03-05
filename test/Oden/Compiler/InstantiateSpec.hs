@@ -56,20 +56,20 @@ identityInt =
   (Poly.TFn missing typeInt typeInt)
 
 lenType :: Poly.Type
-lenType = Poly.TUncurriedFn missing [Poly.TSlice missing tvarA] typeInt
+lenType = Poly.TUncurriedFn missing [Poly.TSlice missing tvarA] [typeInt]
 
 lenPoly :: Core.Expr Poly.Type
 lenPoly = Core.Symbol missing (Identifier "len") lenType
 
 lenIntType :: Mono.Type
-lenIntType = Mono.TUncurriedFn missing [Mono.TSlice missing monoInt] monoInt
+lenIntType = Mono.TUncurriedFn missing [Mono.TSlice missing monoInt] [monoInt]
 
 lenInt :: Core.Expr Poly.Type
 lenInt =
   Core.Symbol
   missing
   (Identifier "len")
-  (Poly.TUncurriedFn missing [Poly.TSlice missing typeInt] typeInt)
+  (Poly.TUncurriedFn missing [Poly.TSlice missing typeInt] [typeInt])
 
 pairPoly :: Core.Expr Poly.Type
 pairPoly =

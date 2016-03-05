@@ -54,9 +54,9 @@ data Type
   -- For foreign definitions:
 
   -- | A function that can have multiple arguments (no currying).
-  | TUncurriedFn (Metadata SourceInfo) [Type] Type -- TODO: Support multiple return values somehow.
+  | TUncurriedFn (Metadata SourceInfo) [Type] [Type]
   -- | A variadic function.
-  | TVariadicFn (Metadata SourceInfo) [Type] Type Type -- TODO: Support multiple return values somehow.
+  | TVariadicFn (Metadata SourceInfo) [Type] Type [Type]
 
   -- | The empty row.
   | REmpty (Metadata SourceInfo)
@@ -141,13 +141,13 @@ toMonomorphic (TCon si n) = Right $ Mono.TCon si n
 toMonomorphic (TNoArgFn si t) = Mono.TNoArgFn si <$> toMonomorphic t
 toMonomorphic (TFn si tx ty) = Mono.TFn si <$> toMonomorphic tx
                                            <*> toMonomorphic ty
-toMonomorphic (TUncurriedFn si a r) =
+toMonomorphic (TUncurriedFn si a rs) =
   Mono.TUncurriedFn si <$> mapM toMonomorphic a
-                       <*> toMonomorphic r
-toMonomorphic (TVariadicFn si a v r) =
+                       <*> mapM toMonomorphic rs
+toMonomorphic (TVariadicFn si a v rs) =
   Mono.TVariadicFn si <$> mapM toMonomorphic a
                       <*> toMonomorphic v
-                      <*> toMonomorphic r
+                      <*> mapM toMonomorphic rs
 toMonomorphic (TSlice si t) = Mono.TSlice si <$> toMonomorphic t
 toMonomorphic (TRecord si row) = Mono.TRecord si <$> toMonomorphic row
 toMonomorphic (TNamed si n t) = Mono.TNamed si n <$> toMonomorphic t
@@ -169,9 +169,9 @@ isPolymorphicType TCon{} = False
 isPolymorphicType (TNoArgFn _ a) = isPolymorphicType a
 isPolymorphicType (TFn _ a b) = isPolymorphicType a || isPolymorphicType b
 isPolymorphicType (TUncurriedFn _ a r) =
-  any isPolymorphicType a || isPolymorphicType r
+  any isPolymorphicType a || any isPolymorphicType r
 isPolymorphicType (TVariadicFn _ a v r) =
-  any isPolymorphicType a || isPolymorphicType v || isPolymorphicType r
+  any isPolymorphicType a || isPolymorphicType v || any isPolymorphicType r
 isPolymorphicType (TSlice _ a) = isPolymorphicType a
 isPolymorphicType (TRecord _ r) = isPolymorphicType r
 isPolymorphicType (TNamed _ _ t) = isPolymorphicType t
@@ -194,8 +194,8 @@ instance FTV Type where
   ftv (TVar _ a)                 = Set.singleton a
   ftv (TFn _ t1 t2)              = ftv t1 `Set.union` ftv t2
   ftv (TNoArgFn _ t)             = ftv t
-  ftv (TUncurriedFn _ as r)      = ftv (r:as)
-  ftv (TVariadicFn _ as v r)     = ftv (v:r:as)
+  ftv (TUncurriedFn _ as rs)     = ftv (as ++ rs)
+  ftv (TVariadicFn _ as v rs)    = ftv (v:(as ++ rs))
   ftv (TSlice _ t)               = ftv t
   ftv (TRecord _ r)              = ftv r
   ftv (TNamed _ _ t)             = ftv t

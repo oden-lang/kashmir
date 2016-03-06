@@ -63,8 +63,7 @@ data Type
   -- For foreign definitions:
 
   -- | A function that can have multiple arguments (no currying).
-  | TUncurriedFn SourceInfo [Type] [Type] -- TODO: Support multiple return values somehow.
-  -- | A variadic function.
+  | TUncurriedFn SourceInfo [Type] [Type]
   | TVariadicFn SourceInfo [Type] Type Type -- TODO: Support multiple return values somehow.
   deriving (Show, Eq, Ord)
 

@@ -205,7 +205,7 @@ codegenRawUncurredFnApplication f ps =
       return $ fc <> parens (hcat (punctuate (comma <+> space) pc))
 
 -- | Generates an anonymous function that will take arguments
--- | of the specified types and return a containing those values
+-- | of the specified types and return a tuple containing those values
 codegenToTupleWrapper :: Mono.Type -> Mono.Type -> [Mono.Type] -> Codegen Doc
 codegenToTupleWrapper t1 t2 tr =
   let

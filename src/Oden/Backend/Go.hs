@@ -15,6 +15,7 @@ import           Oden.Core
 import           Oden.Core.Operator
 import           Oden.Identifier
 import           Oden.QualifiedName (QualifiedName(..))
+import           Oden.SourceInfo (SourceInfo(Missing))
 import           Oden.Type.Basic
 import qualified Oden.Type.Monomorphic as Mono
 
@@ -187,6 +188,37 @@ codegenRange (RangeFrom e) = do
   ec <- codegenExpr e
   return $ brackets $ ec <+> (text ":")
 
+-- | Generates a call to an uncurried function
+codegenRawUncurredFnApplication :: Expr Mono.Type -> [Expr Mono.Type] -> Codegen Doc
+codegenRawUncurredFnApplication f ps =
+  case typeOf f of
+    Mono.TVariadicFn{} ->
+      let nonVariadicParams = init ps
+          slice = last ps
+      in do fc <-codegenExpr f
+            pc <- mapM codegenExpr nonVariadicParams
+            sc <- codegenExpr slice
+            return $ fc <> parens (hcat (punctuate (comma <+> space) (pc ++ [sc <> text "..."])))
+    _ -> do
+      fc <- codegenExpr f
+      pc <- mapM codegenExpr ps
+      return $ fc <> parens (hcat (punctuate (comma <+> space) pc))
+
+-- | Generates an anonymous function that will take arguments
+-- | of the specified types and return a containing those values
+codegenToTupleWrapper :: Mono.Type -> Mono.Type -> [Mono.Type] -> Codegen Doc
+codegenToTupleWrapper t1 t2 tr =
+  let
+    ts = t1:t2:tr
+    argNames = take (length ts) $ map (\x -> "_" ++ show (x::Int)) [0..]
+  in do
+    fnArgs <- mapM (\(n, t) -> funcArg n t) (zip argNames ts)
+    fnType <- codegenType (Mono.TTuple Missing t1 t2 tr)
+    let fnBody = braces $ text "return" <+>
+                          fnType <+>
+                          braces (hcat (punctuate comma (map text argNames)))
+    return $ func empty (hcat (punctuate comma fnArgs)) fnType fnBody
+
 codegenExpr :: Expr Mono.Type -> Codegen Doc
 codegenExpr (Symbol _ i _) =
   codegenIdentifier i
@@ -206,19 +238,17 @@ codegenExpr (Application _ (Symbol _ (Unqualified "not") _) e _) =
   (text "!" <>) <$> codegenExpr e
 codegenExpr (Application _ f p _) =
   (<>) <$> codegenExpr f <*> (parens <$> codegenExpr p)
+
 codegenExpr (UncurriedFnApplication _ f ps _) =
   case typeOf f of
-    Mono.TVariadicFn{} ->
-      let nonVariadicParams = init ps
-          slice = last ps
-      in do fc <-codegenExpr f
-            pc <- mapM codegenExpr nonVariadicParams
-            sc <- codegenExpr slice
-            return $ fc <> parens (hcat (punctuate (comma <+> space) (pc ++ [sc <> text "..."])))
-    _ -> do
-      fc <- codegenExpr f
-      pc <- mapM codegenExpr ps
-      return $ fc <> parens (hcat (punctuate (comma <+> space) pc))
+    -- If there are more return values, we convert them to a tuple
+    Mono.TUncurriedFn _ _ (t1:t2:tr) -> do
+      fnCall <- codegenRawUncurredFnApplication f ps
+      wrapperFn <- codegenToTupleWrapper t1 t2 tr
+      return $ wrapperFn <+> (parens fnCall)
+    -- Otherwise, just generate the call
+    _ -> codegenRawUncurredFnApplication f ps
+
 codegenExpr (NoArgApplication _ f _) =
   (<> parens empty) <$> codegenExpr f
 codegenExpr (Fn _ (NameBinding _ a) body (Mono.TFn _ d r)) =

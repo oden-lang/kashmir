@@ -106,6 +106,10 @@ predefAndMax :: TypingEnvironment
 predefAndMax =  predef `extend` ("max",
                                  Local Predefined "max" $ forall [] (typeUncurried [typeInt, typeInt] [typeInt]))
 
+predefAndPair :: TypingEnvironment
+predefAndPair = predef `extend` ("pair",
+                                 Local Predefined "pair" $ forall [] (typeUncurried [] [typeInt, typeString]))
+
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` ("max",
                                         Local Predefined "max" $ forall [] (typeVariadic [] typeInt typeInt))
@@ -379,7 +383,7 @@ spec = do
                               [Core.Slice Missing [Core.Literal Missing (tBool True) typeBool] (typeSlice typeBool)]
        (TBasic Predefined TInt))
 
-    it "infers single-arg uncurried func application" $
+    it "infers two arg uncurried func application" $
       inferExpr predefAndMax (uApplication (uSymbol (Unqualified "max"))
                                                   [uLiteral (uInt 0)
                                                   ,uLiteral (uInt 1)])
@@ -389,6 +393,13 @@ spec = do
                               [tLiteral (tInt 0) typeInt
                               ,tLiteral (tInt 1) typeInt]
        typeInt)
+
+    it "infers no-arg uncurried multi-value func application" $
+      inferExpr predefAndPair (uApplication (uSymbol (Unqualified "pair")) [])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeString []),
+       tUncurriedFnApplication (tSymbol (Unqualified "pair") (typeUncurried [] [typeInt, typeString])) []
+       (TTuple Missing typeInt typeString []))
 
     it "infers variadic func application" $
       inferExpr predefAndMaxVariadic (uApplication (uSymbol (Unqualified "max"))

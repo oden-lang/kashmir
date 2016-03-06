@@ -313,39 +313,26 @@ infer expr = case expr of
     tf <- infer f
     return (Core.NoArgFn si tf (TNoArgFn si (Core.typeOf tf)))
 
-  Untyped.Application si f [] -> do
-    tv <- fresh si
-    tf <- infer f
-    case Core.typeOf tf of
-      t@(TUncurriedFn _ _ [_]) -> do
-        uni (getSourceInfo tf) t (TUncurriedFn (getSourceInfo tf) [] [tv])
-        return (Core.UncurriedFnApplication si tf [] tv)
-      TUncurriedFn si _ (r1:r2:rs) -> do
-        -- Functions with multipe return values are really returning a
-        -- slice when executed
-        uni (getSourceInfo tf) (TUncurriedFn (getSourceInfo tf) [] [TTuple si r1 r2 rs])
-                               (TUncurriedFn (getSourceInfo tf) [] [tv])
-        return (Core.UncurriedFnApplication si tf [] tv)
-      -- No-param application of variadic function is automatically transformed
-      -- to application of empty slice.
-      t@(TVariadicFn _ [] variadicArg _) -> do
-        uni (getSourceInfo tf) t (TVariadicFn (getSourceInfo tf) [] variadicArg tv)
-        return (Core.UncurriedFnApplication si tf [Core.Slice (getSourceInfo variadicArg) [] variadicArg] tv)
-      TVariadicFn _ nonVariadicArgs _ _ ->
-        throwError (ArgumentCountMismatch tf nonVariadicArgs [])
-      t -> do
-        uni (getSourceInfo tf) t (TNoArgFn (getSourceInfo tf) tv)
-        return (Core.NoArgApplication si tf tv)
-
   Untyped.Application si f ps -> do
     tf <- infer f
     case Core.typeOf tf of
-      t@TUncurriedFn{} -> do
+
+      -- Uncurried non-variadic functions with a single return value
+      t@(TUncurriedFn _ _ [_]) -> do
         tv <- fresh (getSourceInfo t)
         tps <- mapM infer ps
-        -- TODO: MULTIVALUE
         uni (getSourceInfo tf) t (TUncurriedFn si (map Core.typeOf tps) [tv])
         return (Core.UncurriedFnApplication si tf tps tv)
+
+      -- Uncurried non-variadic functions with multiple return values
+      t@(TUncurriedFn _ as (r1:r2:rs)) -> do
+        tv <- fresh (getSourceInfo t)
+        tps <- mapM infer ps
+        uni (getSourceInfo tf) (TUncurriedFn (getSourceInfo tf) as [TTuple si r1 r2 rs])
+                               (TUncurriedFn (getSourceInfo tf) (map Core.typeOf tps) [tv])
+        return (Core.UncurriedFnApplication si tf tps tv)
+
+      -- Uncurried variadic functions (only single return value works for now)
       t@(TVariadicFn _ nonVariadicTypes variadicType _) -> do
         tv <- fresh (getSourceInfo t)
         nonVariadicParams <- mapM infer (take (length nonVariadicTypes) ps)
@@ -354,6 +341,14 @@ infer expr = case expr of
         let allParams = nonVariadicParams ++ [Core.Slice sliceSi variadicParams variadicType]
         uni (getSourceInfo tf) t (TVariadicFn (getSourceInfo tf) (map Core.typeOf nonVariadicParams) variadicType tv)
         return (Core.UncurriedFnApplication si tf allParams tv)
+
+      -- No-arg functions
+      t | ps == [] -> do
+        tv <- fresh (getSourceInfo t)
+        uni (getSourceInfo tf) t (TNoArgFn (getSourceInfo tf) tv)
+        return (Core.NoArgApplication si tf tv)
+
+      -- Everything else, i.e. functions with a single argument and one return value
       t ->
         foldM app tf ps
         where

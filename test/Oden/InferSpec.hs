@@ -110,6 +110,10 @@ predefAndPair :: TypingEnvironment
 predefAndPair = predef `extend` ("pair",
                                  Local Predefined "pair" $ forall [] (typeUncurried [] [typeInt, typeString]))
 
+predefAndSwap :: TypingEnvironment
+predefAndSwap = predef `extend` ("swap",
+                                 Local Predefined "swap" $ forall [] (typeUncurried [typeString, typeInt] [typeInt, typeString]))
+
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` ("max",
                                         Local Predefined "max" $ forall [] (typeVariadic [] typeInt typeInt))
@@ -399,6 +403,18 @@ spec = do
       `shouldSucceedWith`
       (forall [] (TTuple Missing typeInt typeString []),
        tUncurriedFnApplication (tSymbol (Unqualified "pair") (typeUncurried [] [typeInt, typeString])) []
+       (TTuple Missing typeInt typeString []))
+
+    it "infers two arg uncurried multi-value func application" $
+      inferExpr predefAndSwap (uApplication (uSymbol (Unqualified "swap"))
+                                                     [uLiteral (uString "hey")
+                                                     ,uLiteral (uInt 1)])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeString []),
+       tUncurriedFnApplication (tSymbol (Unqualified "swap")
+                                        (typeUncurried [typeString, typeInt] [typeInt, typeString]))
+                               [tLiteral (tString "hey") typeString
+                               ,tLiteral (tInt 1) typeInt]
        (TTuple Missing typeInt typeString []))
 
     it "infers variadic func application" $

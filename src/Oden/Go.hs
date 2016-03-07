@@ -126,24 +126,20 @@ convertType (G.Array _ _) = Left "Arrays"
 convertType (Slice t) = Poly.TSlice Missing <$> convertType t
 convertType Interface{} = Right $ Poly.TAny Missing
 convertType (Signature _ (Just _) _ _) = Left "Methods (functions with receivers)"
-convertType (Signature False Nothing args []) = do
-  as <- mapM convertType args
-  Right (Poly.TUncurriedFn Missing as [Poly.TUnit Missing])
 convertType (Signature False Nothing args ret) = do
   as <- mapM convertType args
-  rs <- mapM convertType ret
-  Right (Poly.TUncurriedFn Missing as rs)
+  case mapM convertType ret of
+    Left _ -> Right (Poly.TUncurriedFn Missing as [Poly.TUnit Missing])   -- unsupported return types
+    Right [] -> Right (Poly.TUncurriedFn Missing as [Poly.TUnit Missing]) -- no return type
+    Right rs -> Right (Poly.TUncurriedFn Missing as rs)
 convertType (Signature True Nothing [] []) = Left "Variadic functions with no arguments"
-convertType (Signature True Nothing args []) = do
-  as <- mapM convertType (init args)
-  v <- convertType (last args)
-  Right (Poly.TVariadicFn Missing as v [Poly.TUnit Missing])
 convertType (Signature True Nothing args ret) = do
   as <- mapM convertType (init args)
   v <- convertType (last args)
-  rs <- mapM convertType ret
-  Right (Poly.TVariadicFn Missing as v rs)
--- convertType (Signature _ Nothing _ _) = Left "Functions with multiple return values"
+  case mapM convertType ret of
+    Left _ -> Right (Poly.TVariadicFn Missing as v [Poly.TUnit Missing]) -- unsupported return type
+    Right [] -> Right (Poly.TVariadicFn Missing as v [Poly.TUnit Missing]) -- no return type
+    Right rs -> Right (Poly.TVariadicFn Missing as v rs)
 convertType (Named pkgName n (Struct fields)) = do
   fields' <- mapM convertField fields
   return (Poly.TNamed Missing (FQN pkgName n) (Poly.TStruct Missing fields'))

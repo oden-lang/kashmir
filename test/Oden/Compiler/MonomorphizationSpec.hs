@@ -157,7 +157,7 @@ sliceLenDef =
     (Poly.Forall Missing [] typeInt,
      Core.UncurriedFnApplication
       Missing
-      (Core.Symbol Missing (Unqualified "len") (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeBool] typeInt))
+      (Core.Symbol Missing (Unqualified "len") (Poly.TUncurriedFn Missing [Poly.TSlice Missing typeBool] [typeInt]))
       [Core.Slice Missing [Core.Literal Missing (Core.Bool True) typeBool] (Poly.TSlice Missing typeBool)]
       typeInt)
 
@@ -169,7 +169,7 @@ sliceLenMonomorphed =
     monoInt
     (Core.UncurriedFnApplication
      Missing
-     (Core.Symbol Missing (Unqualified "len") (Mono.TUncurriedFn Missing [Mono.TSlice Missing monoBool] monoInt))
+     (Core.Symbol Missing (Unqualified "len") (Mono.TUncurriedFn Missing [Mono.TSlice Missing monoBool] [monoInt]))
      [Core.Slice Missing [Core.Literal Missing (Core.Bool True) monoBool] (Mono.TSlice Missing (Mono.TBasic Missing TBool))]
      monoInt)
 

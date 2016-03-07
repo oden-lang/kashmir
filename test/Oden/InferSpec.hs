@@ -104,15 +104,27 @@ predefAndStringLength =  predef `extend` ("stringLength",
 
 predefAndMax :: TypingEnvironment
 predefAndMax =  predef `extend` ("max",
-                                 Local Predefined "max" $ forall [] (typeUncurried [typeInt, typeInt] typeInt))
+                                 Local Predefined "max" $ forall [] (typeUncurried [typeInt, typeInt] [typeInt]))
+
+predefAndPair :: TypingEnvironment
+predefAndPair = predef `extend` ("pair",
+                                 Local Predefined "pair" $ forall [] (typeUncurried [] [typeInt, typeString]))
+
+predefAndSwap :: TypingEnvironment
+predefAndSwap = predef `extend` ("swap",
+                                 Local Predefined "swap" $ forall [] (typeUncurried [typeString, typeInt] [typeInt, typeString]))
 
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` ("max",
-                                        Local Predefined "max" $ forall [] (typeVariadic [] typeInt typeInt))
+                                        Local Predefined "max" $ forall [] (typeVariadic [] typeInt [typeInt]))
+
+predefAndMaxMinVariadic :: TypingEnvironment
+predefAndMaxMinVariadic = predef `extend` ("maxmin",
+                                        Local Predefined "maxmin" $ forall [] (typeVariadic [] typeInt [typeInt, typeInt]))
 
 predefAndIdentityAny :: TypingEnvironment
 predefAndIdentityAny = predef `extend` ("identity",
-                                        Local Predefined "identity" $ forall [] (typeUncurried [typeAny] (typeAny)))
+                                        Local Predefined "identity" $ forall [] (typeUncurried [typeAny] ([typeAny])))
 
 booleanOp :: Type
 booleanOp = typeFn typeBool (typeFn typeBool typeBool)
@@ -299,7 +311,7 @@ spec = do
       `shouldSucceedWith`
       (forall [] typeAny,
        tUncurriedFnApplication
-        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
         [tLiteral (tBool False) typeBool]
         typeAny)
 
@@ -329,9 +341,9 @@ spec = do
       `shouldSucceedWith`
       (forall [] typeAny,
        tUncurriedFnApplication
-        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+        (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
         [tUncurriedFnApplication
-         (tSymbol (Unqualified "identity") (typeUncurried [typeAny] typeAny))
+         (tSymbol (Unqualified "identity") (typeUncurried [typeAny] [typeAny]))
          [tLiteral (tBool False) typeBool]
          typeAny]
         typeAny)
@@ -375,20 +387,39 @@ spec = do
       inferExpr predef (uApplication (uSymbol (Unqualified "len")) [uSlice [uLiteral (uBool True)]])
       `shouldSucceedWith`
       (forall [] (TBasic Predefined TInt),
-       tUncurriedFnApplication (Core.Symbol Missing (Unqualified "len") (TUncurriedFn Missing [TSlice Predefined (TBasic Missing TBool)] (TBasic Predefined TInt)))
+       tUncurriedFnApplication (Core.Symbol Missing (Unqualified "len") (TUncurriedFn Missing [TSlice Predefined (TBasic Missing TBool)] [TBasic Predefined TInt]))
                               [Core.Slice Missing [Core.Literal Missing (tBool True) typeBool] (typeSlice typeBool)]
        (TBasic Predefined TInt))
 
-    it "infers single-arg uncurried func application" $
+    it "infers two arg uncurried func application" $
       inferExpr predefAndMax (uApplication (uSymbol (Unqualified "max"))
                                                   [uLiteral (uInt 0)
                                                   ,uLiteral (uInt 1)])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeUncurried [typeInt, typeInt] typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeUncurried [typeInt, typeInt] [typeInt]))
                               [tLiteral (tInt 0) typeInt
                               ,tLiteral (tInt 1) typeInt]
        typeInt)
+
+    it "infers no-arg uncurried multi-value func application" $
+      inferExpr predefAndPair (uApplication (uSymbol (Unqualified "pair")) [])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeString []),
+       tUncurriedFnApplication (tSymbol (Unqualified "pair") (typeUncurried [] [typeInt, typeString])) []
+       (TTuple Missing typeInt typeString []))
+
+    it "infers two arg uncurried multi-value func application" $
+      inferExpr predefAndSwap (uApplication (uSymbol (Unqualified "swap"))
+                                                     [uLiteral (uString "hey")
+                                                     ,uLiteral (uInt 1)])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeString []),
+       tUncurriedFnApplication (tSymbol (Unqualified "swap")
+                                        (typeUncurried [typeString, typeInt] [typeInt, typeString]))
+                               [tLiteral (tString "hey") typeString
+                               ,tLiteral (tInt 1) typeInt]
+       (TTuple Missing typeInt typeString []))
 
     it "infers variadic func application" $
       inferExpr predefAndMaxVariadic (uApplication (uSymbol (Unqualified "max"))
@@ -396,7 +427,7 @@ spec = do
                                                           ,uLiteral (uInt 1)])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt [typeInt]))
                               [tSlice [tLiteral (tInt 0) typeInt
                                           ,tLiteral (tInt 1) typeInt] typeInt]
        typeInt)
@@ -405,9 +436,27 @@ spec = do
       inferExpr predefAndMaxVariadic (uApplication (uSymbol (Unqualified "max")) [])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt [typeInt]))
                               [tSlice [] typeInt]
        typeInt)
+
+    it "infers variadic func application with multipe return values" $
+      inferExpr predefAndMaxMinVariadic (uApplication (uSymbol (Unqualified "maxmin"))
+                                                      [uLiteral (uInt 0), uLiteral (uInt 1)])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeInt []),
+       tUncurriedFnApplication (tSymbol (Unqualified "maxmin") (typeVariadic [] typeInt [typeInt, typeInt]))
+                              [tSlice [tLiteral (tInt 0) typeInt, tLiteral (tInt 1) typeInt ] typeInt]
+       (TTuple Missing typeInt typeInt []))
+
+
+    it "infers variadic no-arg func application with multipe return values" $
+      inferExpr predefAndMaxMinVariadic (uApplication (uSymbol (Unqualified "maxmin")) [])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeInt []),
+       tUncurriedFnApplication (tSymbol (Unqualified "maxmin") (typeVariadic [] typeInt [typeInt, typeInt]))
+                              [tSlice [] typeInt]
+       (TTuple Missing typeInt typeInt []))
 
     it "infers struct initializer" $
       let structType = (TStruct Missing [TStructField Missing "msg" (TBasic Missing TString)]) in

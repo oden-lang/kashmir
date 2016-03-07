@@ -16,8 +16,8 @@ data Type
   | TCon SourceInfo Type Type
   | TNoArgFn SourceInfo Type
   | TFn SourceInfo Type Type
-  | TUncurriedFn SourceInfo [Type] Type
-  | TVariadicFn SourceInfo [Type] Type Type
+  | TUncurriedFn SourceInfo [Type] [Type]
+  | TVariadicFn SourceInfo [Type] Type [Type]
   | TSlice SourceInfo Type
   | TStruct SourceInfo [StructField]
   | TNamed SourceInfo QualifiedName Type

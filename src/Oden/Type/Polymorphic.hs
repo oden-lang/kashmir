@@ -63,9 +63,8 @@ data Type
   -- For foreign definitions:
 
   -- | A function that can have multiple arguments (no currying).
-  | TUncurriedFn SourceInfo [Type] Type -- TODO: Support multiple return values somehow.
-  -- | A variadic function.
-  | TVariadicFn SourceInfo [Type] Type Type -- TODO: Support multiple return values somehow.
+  | TUncurriedFn SourceInfo [Type] [Type]
+  | TVariadicFn SourceInfo [Type] Type [Type]
   deriving (Show, Eq, Ord)
 
 instance HasSourceInfo Type where
@@ -134,13 +133,13 @@ toMonomorphic (TCon si d r) = Mono.TCon si <$> toMonomorphic d <*> toMonomorphic
 toMonomorphic (TNoArgFn si t) = Mono.TNoArgFn si <$> toMonomorphic t
 toMonomorphic (TFn si tx ty) = Mono.TFn si <$> toMonomorphic tx
                                            <*> toMonomorphic ty
-toMonomorphic (TUncurriedFn si a r) =
+toMonomorphic (TUncurriedFn si a rs) =
   Mono.TUncurriedFn si <$> mapM toMonomorphic a
-                       <*> toMonomorphic r
-toMonomorphic (TVariadicFn si a v r) =
+                       <*> mapM toMonomorphic rs
+toMonomorphic (TVariadicFn si a v rs) =
   Mono.TVariadicFn si <$> mapM toMonomorphic a
                       <*> toMonomorphic v
-                      <*> toMonomorphic r
+                      <*> mapM toMonomorphic rs
 toMonomorphic (TSlice si t) = Mono.TSlice si <$> toMonomorphic t
 toMonomorphic (TStruct si fs) = Mono.TStruct si <$> mapM toMonomorphicStructField fs
   where toMonomorphicStructField (TStructField si' n pt) =
@@ -163,9 +162,9 @@ isPolymorphicType (TCon _ d r) = isPolymorphicType d || isPolymorphicType r
 isPolymorphicType (TNoArgFn _ a) = isPolymorphicType a
 isPolymorphicType (TFn _ a b) = isPolymorphicType a || isPolymorphicType b
 isPolymorphicType (TUncurriedFn _ a r) =
-  any isPolymorphicType a || isPolymorphicType r
+  any isPolymorphicType a || any isPolymorphicType r
 isPolymorphicType (TVariadicFn _ a v r) =
-  any isPolymorphicType a || isPolymorphicType v || isPolymorphicType r
+  any isPolymorphicType a || isPolymorphicType v || any isPolymorphicType r
 isPolymorphicType (TSlice _ a) = isPolymorphicType a
 isPolymorphicType (TStruct _ fs) = any (isPolymorphicType . getStructFieldType) fs
 isPolymorphicType (TNamed _ _ t) = isPolymorphicType t
@@ -186,9 +185,9 @@ equalsT (TCon _ d1 r1) (TCon _ d2 r2) = d1 `equalsT` d2 && r1 `equalsT` r2
 equalsT (TNoArgFn _ a1) (TNoArgFn _ a2) = a1 `equalsT` a2
 equalsT (TFn _ a1 b1) (TFn _ a2 b2) = a1 `equalsT` a2 && b1 `equalsT` b2
 equalsT (TUncurriedFn _ a1 r1) (TUncurriedFn _ a2 r2) =
-  a1 `equalsAllT` a2 && r1 `equalsT` r2
+  a1 `equalsAllT` a2 && r1 `equalsAllT` r2
 equalsT (TVariadicFn _ a1 v1 r1) (TVariadicFn _ a2 v2 r2)=
-  a1 `equalsAllT` a2 && v1 `equalsT` v2 && r1 `equalsT` r2
+  a1 `equalsAllT` a2 && v1 `equalsT` v2 && r1 `equalsAllT` r2
 equalsT (TSlice _ e1) (TSlice _ e2) = e1 `equalsT` e2
 equalsT (TStruct _ fs1) (TStruct _ fs2) =
   map getStructFieldType fs1 `equalsAllT` map getStructFieldType fs2
@@ -213,8 +212,8 @@ instance FTV Type where
   ftv (TVar _ a)                = Set.singleton a
   ftv (TFn _ t1 t2)             = ftv t1 `Set.union` ftv t2
   ftv (TNoArgFn _ t)            = ftv t
-  ftv (TUncurriedFn _ as r)     = ftv (r:as)
-  ftv (TVariadicFn _ as v r)    = ftv (v:r:as)
+  ftv (TUncurriedFn _ as rs)    = ftv (as ++ rs)
+  ftv (TVariadicFn _ as v rs)   = ftv (v:(as ++ rs))
   ftv (TSlice _ t)              = ftv t
   ftv (TStruct _ fs)            = ftv (map getStructFieldType fs)
   ftv (TNamed _ _ t)            = ftv t

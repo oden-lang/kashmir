@@ -60,18 +60,24 @@ writeType (Mono.TFn _ tl tr) = do
   withIncreasedLevel (writeType tl)
   paddedTo
   withIncreasedLevel (writeType tr)
-writeType (Mono.TUncurriedFn _ as r) = do
+writeType (Mono.TUncurriedFn si as rs) = do
   foldl writeArg (return ()) as
-  withIncreasedLevel (writeType r)
+  case rs of
+    [] -> undefined
+    [r] -> withIncreasedLevel (writeType r)
+    (r1:r2:rt) -> withIncreasedLevel $ writeType (Mono.TTuple si r1 r2 rt)
   where
   writeArg a t = a >> withIncreasedLevel (writeType t) >> paddedTo
-writeType (Mono.TVariadicFn _ as v r) = do
+writeType (Mono.TVariadicFn si as v rs) = do
   foldl writeArg (return ()) as
   tell "variadic"
   pad
   withIncreasedLevel (writeType v)
   paddedTo
-  withIncreasedLevel (writeType r)
+  case rs of
+    [] -> undefined
+    [r] -> withIncreasedLevel (writeType r)
+    (r1:r2:rt) -> withIncreasedLevel $ writeType (Mono.TTuple si r1 r2 rt)
   where
   writeArg a t = a >> withIncreasedLevel (writeType t) >> paddedTo
 writeType (Mono.TSlice _ t) = do

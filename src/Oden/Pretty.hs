@@ -126,7 +126,7 @@ instance Pretty Mono.Type where
   pp (Mono.TNoArgFn _ t) = rArr <+> pp t
   pp (Mono.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
   pp (Mono.TUncurriedFn _ as [r]) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
-  pp (Mono.TUncurriedFn _ as rs) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> parens (hsep (punctuate (text ",") (map pp rs)))
+  pp (Mono.TUncurriedFn _ as rs) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> parens (hsep (punctuate (text ", ") (map pp rs)))
   pp (Mono.TVariadicFn _ as v r) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
   pp (Mono.TSlice _ t) =
     text "!" <> braces (pp t)

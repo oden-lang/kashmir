@@ -332,14 +332,26 @@ infer expr = case expr of
                                (TUncurriedFn (getSourceInfo tf) (map Core.typeOf tps) [tv])
         return (Core.UncurriedFnApplication si tf tps tv)
 
-      -- Uncurried variadic functions (only single return value works for now)
-      t@(TVariadicFn _ nonVariadicTypes variadicType _) -> do
+      -- Uncurried variadic functions with a single return value
+      t@(TVariadicFn _ nonVariadicTypes variadicType [_]) -> do
         tv <- fresh (getSourceInfo t)
         nonVariadicParams <- mapM infer (take (length nonVariadicTypes) ps)
         variadicParams <- mapM infer (drop (length nonVariadicTypes) ps)
         let sliceSi = if null variadicParams then Missing else getSourceInfo (head variadicParams)
         let allParams = nonVariadicParams ++ [Core.Slice sliceSi variadicParams variadicType]
-        uni (getSourceInfo tf) t (TVariadicFn (getSourceInfo tf) (map Core.typeOf nonVariadicParams) variadicType tv)
+        uni (getSourceInfo tf) t (TVariadicFn (getSourceInfo tf) (map Core.typeOf nonVariadicParams) variadicType [tv])
+        return (Core.UncurriedFnApplication si tf allParams tv)
+
+      -- Uncurried variadic functions with multiple return values
+      t@(TVariadicFn _ nonVariadicTypes variadicType (r1:r2:rs)) -> do
+        tv <- fresh (getSourceInfo t)
+        nonVariadicParams <- mapM infer (take (length nonVariadicTypes) ps)
+        variadicParams <- mapM infer (drop (length nonVariadicTypes) ps)
+        let sliceSi = if null variadicParams then Missing else getSourceInfo (head variadicParams)
+        let allParams = nonVariadicParams ++ [Core.Slice sliceSi variadicParams variadicType]
+        uni (getSourceInfo tf)
+            (TVariadicFn (getSourceInfo tf) nonVariadicTypes                    variadicType [TTuple si r1 r2 rs])
+            (TVariadicFn (getSourceInfo tf) (map Core.typeOf nonVariadicParams) variadicType [tv])
         return (Core.UncurriedFnApplication si tf allParams tv)
 
       -- No-arg functions
@@ -520,7 +532,7 @@ normalize (Forall si _ exprType, te) = (Forall si tvarBindings (normtype exprTyp
     fv (TNoArgFn _ a)         = fv a
     fv (TFn _ a b)            = fv a ++ fv b
     fv (TUncurriedFn _ as r)  = concatMap fv as ++ concatMap fv r
-    fv (TVariadicFn _ as v r) = concatMap fv as ++ fv v ++ fv r
+    fv (TVariadicFn _ as v r) = concatMap fv as ++ fv v ++ concatMap fv r
     fv (TCon _ d r)           = fv d ++ fv r
     fv (TSlice _ t)           = fv t
     fv (TStruct _ fs)         = concatMap (fv . getStructFieldType) fs
@@ -534,7 +546,7 @@ normalize (Forall si _ exprType, te) = (Forall si tvarBindings (normtype exprTyp
     normtype (TNoArgFn si' a)         = TNoArgFn si' (normtype a)
     normtype (TFn si' a b)            = TFn si' (normtype a) (normtype b)
     normtype (TUncurriedFn si' as r)  = TUncurriedFn si' (map normtype as) (map normtype r)
-    normtype (TVariadicFn si' as v r) = TVariadicFn si' (map normtype as) (normtype v) (normtype r)
+    normtype (TVariadicFn si' as v r) = TVariadicFn si' (map normtype as) (normtype v) (map normtype r)
     normtype (TCon si' d r)           = TCon si' (normtype d) (normtype r)
     normtype (TSlice si' a)           = TSlice si' (normtype a)
     normtype (TStruct ssi fs)         = TStruct ssi (map normFieldType fs)
@@ -586,7 +598,7 @@ unifies si (TUncurriedFn _ as1 r1) (TUncurriedFn _ as2 r2) = do
 unifies si (TVariadicFn _ as1 v1 r1) (TVariadicFn _ as2 v2 r2) = do
   a <- unifyMany si as1 as2
   v <- unifies si v1 v2
-  r <- unifies si r1 r2
+  r <- unifyMany si r1 r2
   return (a `compose` v `compose` r)
 unifies si (TTuple _ f1 s1 r1) (TTuple _ f2 s2 r2) = do
   f <- unifies si f1 f2

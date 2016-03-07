@@ -131,22 +131,18 @@ convertType (Signature False Nothing args []) = do
   Right (Poly.TUncurriedFn Missing as [Poly.TUnit Missing])
 convertType (Signature False Nothing args ret) = do
   as <- mapM convertType args
-  r <- mapM convertType ret
-  Right (Poly.TUncurriedFn Missing as r)
+  rs <- mapM convertType ret
+  Right (Poly.TUncurriedFn Missing as rs)
 convertType (Signature True Nothing [] []) = Left "Variadic functions with no arguments"
 convertType (Signature True Nothing args []) = do
   as <- mapM convertType (init args)
   v <- convertType (last args)
-  Right (Poly.TVariadicFn Missing as v (Poly.TUnit Missing))
-convertType (Signature True Nothing args [ret]) = do
+  Right (Poly.TVariadicFn Missing as v [Poly.TUnit Missing])
+convertType (Signature True Nothing args ret) = do
   as <- mapM convertType (init args)
   v <- convertType (last args)
-  r <- convertType ret
-  Right (Poly.TVariadicFn Missing as v r)
-convertType (Signature True Nothing args _) = do
-  as <- mapM convertType (init args)
-  v <- convertType (last args)
-  Right (Poly.TVariadicFn Missing as v (Poly.TUnit Missing))
+  rs <- mapM convertType ret
+  Right (Poly.TVariadicFn Missing as v rs)
 -- convertType (Signature _ Nothing _ _) = Left "Functions with multiple return values"
 convertType (Named pkgName n (Struct fields)) = do
   fields' <- mapM convertField fields

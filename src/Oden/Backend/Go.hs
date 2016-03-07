@@ -139,11 +139,16 @@ codegenType (Mono.TUncurriedFn _ as rs) = do
   as' <- mapM codegenType as
   rcs <- mapM codegenType rs
   return $ func empty (hcat (punctuate (comma <+> space) as')) (braces (hcat (punctuate (text ",") rcs))) empty
-codegenType (Mono.TVariadicFn _ as v r) = do
+codegenType (Mono.TVariadicFn _ as v [r]) = do
   as' <- mapM codegenType as
   vc <- codegenType v
   rc <- codegenType r
   return $ func empty (hcat (punctuate (comma <+> space) (as' ++ [vc <> text "..."]))) rc empty
+codegenType (Mono.TVariadicFn _ as v rs) = do
+  as' <- mapM codegenType as
+  vc <- codegenType v
+  rcs <- mapM codegenType rs
+  return $ func empty (hcat (punctuate (comma <+> space) (as' ++ [vc <> text "..."]))) (braces (hcat (punctuate (text ",") rcs))) empty
 codegenType (Mono.TStruct _ fs) = (text "struct" <>) . block . vcat <$> (mapM codegenField fs)
   where codegenField (Mono.TStructField _ name t) = do
           tc <- codegenType t
@@ -243,6 +248,10 @@ codegenExpr (UncurriedFnApplication _ f ps _) =
   case typeOf f of
     -- If there are more return values, we convert them to a tuple
     Mono.TUncurriedFn _ _ (t1:t2:tr) -> do
+      fnCall <- codegenRawUncurredFnApplication f ps
+      wrapperFn <- codegenToTupleWrapper t1 t2 tr
+      return $ wrapperFn <+> (parens fnCall)
+    Mono.TVariadicFn _ _ _ (t1:t2:tr) -> do
       fnCall <- codegenRawUncurredFnApplication f ps
       wrapperFn <- codegenToTupleWrapper t1 t2 tr
       return $ wrapperFn <+> (parens fnCall)

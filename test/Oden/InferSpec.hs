@@ -116,7 +116,11 @@ predefAndSwap = predef `extend` ("swap",
 
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` ("max",
-                                        Local Predefined "max" $ forall [] (typeVariadic [] typeInt typeInt))
+                                        Local Predefined "max" $ forall [] (typeVariadic [] typeInt [typeInt]))
+
+predefAndMaxMinVariadic :: TypingEnvironment
+predefAndMaxMinVariadic = predef `extend` ("maxmin",
+                                        Local Predefined "maxmin" $ forall [] (typeVariadic [] typeInt [typeInt, typeInt]))
 
 predefAndIdentityAny :: TypingEnvironment
 predefAndIdentityAny = predef `extend` ("identity",
@@ -423,7 +427,7 @@ spec = do
                                                           ,uLiteral (uInt 1)])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt [typeInt]))
                               [tSlice [tLiteral (tInt 0) typeInt
                                           ,tLiteral (tInt 1) typeInt] typeInt]
        typeInt)
@@ -432,9 +436,27 @@ spec = do
       inferExpr predefAndMaxVariadic (uApplication (uSymbol (Unqualified "max")) [])
       `shouldSucceedWith`
       (forall [] typeInt,
-       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt typeInt))
+       tUncurriedFnApplication (tSymbol (Unqualified "max") (typeVariadic [] typeInt [typeInt]))
                               [tSlice [] typeInt]
        typeInt)
+
+    it "infers variadic func application with multipe return values" $
+      inferExpr predefAndMaxMinVariadic (uApplication (uSymbol (Unqualified "maxmin"))
+                                                      [uLiteral (uInt 0), uLiteral (uInt 1)])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeInt []),
+       tUncurriedFnApplication (tSymbol (Unqualified "maxmin") (typeVariadic [] typeInt [typeInt, typeInt]))
+                              [tSlice [tLiteral (tInt 0) typeInt, tLiteral (tInt 1) typeInt ] typeInt]
+       (TTuple Missing typeInt typeInt []))
+
+
+    it "infers variadic no-arg func application with multipe return values" $
+      inferExpr predefAndMaxMinVariadic (uApplication (uSymbol (Unqualified "maxmin")) [])
+      `shouldSucceedWith`
+      (forall [] (TTuple Missing typeInt typeInt []),
+       tUncurriedFnApplication (tSymbol (Unqualified "maxmin") (typeVariadic [] typeInt [typeInt, typeInt]))
+                              [tSlice [] typeInt]
+       (TTuple Missing typeInt typeInt []))
 
     it "infers struct initializer" $
       let structType = (TStruct Missing [TStructField Missing "msg" (TBasic Missing TString)]) in

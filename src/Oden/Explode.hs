@@ -15,16 +15,18 @@ import           Oden.SourceInfo
 import           Oden.Type.Signature
 
 import           Control.Monad
+import           Control.Monad.Writer
 import qualified Data.Map              as Map
 
 data ExplodeError = TypeSignatureWithoutDefinition SourceInfo Identifier (TypeSignature SourceInfo)
+                  | TypeSignatureRedefinition SourceInfo Identifier (Maybe (TypeSignature SourceInfo))
                   | InvalidMemberAccessExpression SourceInfo Untyped.Expr Untyped.Expr
                   deriving (Show, Eq)
 
 explodeNameBinding :: NameBinding -> Untyped.NameBinding
 explodeNameBinding (NameBinding si name) = Untyped.NameBinding (Metadata si) name
 
-explodeExpr :: Expr -> Either ExplodeError Untyped.Expr
+explodeExpr :: Expr -> Writer [ExplodeError] Untyped.Expr
 explodeExpr (Subscript si es [Singular e]) =
   Untyped.Subscript (Metadata si) <$> explodeExpr es <*> explodeExpr e
 explodeExpr (Subscript si es [Range e1 e2]) =
@@ -69,7 +71,8 @@ explodeExpr (MemberAccess si expr (Symbol _ name)) =
 explodeExpr (MemberAccess si expr nonName) = do
   expr' <- explodeExpr expr
   nonName' <- explodeExpr nonName
-  Left $ InvalidMemberAccessExpression si expr' nonName'
+  tell [InvalidMemberAccessExpression si expr' nonName']
+  return expr'
 
 -- invalid, but can be handled anyway
 explodeExpr (Subscript _ a []) = explodeExpr a
@@ -83,34 +86,59 @@ explodeExpr (Slice si es) =
 explodeExpr (Block si es) =
   Untyped.Block (Metadata si) <$> mapM explodeExpr es
 
-explodeTopLevel :: PackageName -> [TopLevel] -> Either [ExplodeError] ([Untyped.ImportReference], [Untyped.Definition])
-explodeTopLevel pkg top =
-  case foldM iter ([], Map.empty, []) top of
-    Right (is, scs, defs) ->
-      case Map.assocs scs of
-        [] -> return (is, defs)
-        as -> Left (map toSignatureError as)
-    -- TODO: Catch error in multiple top level expressions
-    Left e -> Left [e]
+-- temporary metadata for top level definitions, used for keeping track
+-- of duplications and detecting missing terms for type signatures
+data TempTopLevel = TempTop {
+    tempType :: (SourceInfo, Maybe (TypeSignature SourceInfo)),
+    -- whether this signature has a corresponding definition
+    hasValue :: Bool
+}
+
+explodeTopLevel :: PackageName -> [TopLevel] -> Writer [ExplodeError] ([Untyped.ImportReference], [Untyped.Definition])
+explodeTopLevel pkg top = do
+  (is, scs, defs) <- foldM iter ([], Map.empty, []) top
+  case filter (not . hasValue . snd) (Map.assocs scs) of
+    [] -> return ()
+    us -> mapM_ (tell . (:[]) . typeSigNoValErr) us
+  return (is, defs)
   where
   iter (is, ts, defs) (FnDefinition si name args body) = do
-    def <- Untyped.Definition (Metadata si) name (snd <$> Map.lookup name ts) <$> explodeExpr (Fn si args body)
-    return (is, Map.delete name ts, defs ++ [def])
+    def <- Untyped.Definition (Metadata si) name (Map.lookup name ts >>= snd . tempType) <$> explodeExpr (Fn si args body)
+    return (is, assignValue name si ts, defs ++ [def])
   iter (is, ts, defs) (ValueDefinition si name expr) = do
-    def <- Untyped.Definition (Metadata si) name (snd <$> Map.lookup name ts) <$> explodeExpr expr
-    return (is, Map.delete name ts, defs ++ [def])
-  iter (is, ts, defs) (TypeSignatureDeclaration tsi name sc) =
-    return (is, Map.insert name (tsi, sc) ts, defs)
+    def <- Untyped.Definition (Metadata si) name (Map.lookup name ts >>= snd . tempType) <$> explodeExpr expr
+    return (is, assignValue name si ts, defs ++ [def])
+  iter (is, ts, defs) (TypeSignatureDeclaration tsi name sc) = do
+    let (TypeSignature sc' _ _) = sc
+    case Map.lookup name ts of
+      Just existing -> tell [typeSigReDefErr (name, existing) sc'] -- type already defined
+      Nothing -> return ()
+    return (is, newTypeSig name tsi (Just sc) ts, defs)
   iter (is, ts, defs) (ImportDeclaration si name) =
     return (is ++ [Untyped.ImportReference (Metadata si) name], ts, defs)
   iter (is, ts, defs) (TypeDefinition si name typeSig) =
     -- TODO: Add support for type parameters
     let def = Untyped.TypeDefinition (Metadata si) (FQN pkg name) [] typeSig
-    in return (is, Map.delete name ts, defs ++ [def])
-  toSignatureError :: (Identifier, (SourceInfo, TypeSignature SourceInfo)) -> ExplodeError
-  toSignatureError (n, (si, sc)) = TypeSignatureWithoutDefinition si n sc
+    in return (is, ts, defs ++ [def])
+  newTypeSig name tsi msc
+    = Map.insertWith (\_ old -> old) name (TempTop (tsi, msc) False)
+  assignValue name si
+    -- if there's type signature, keep its location
+    = Map.insertWith (\_ (TempTop (_, sc') _) -> (TempTop (si, sc') True))
+                     name (TempTop (si, Nothing) True)
+  -- type signature doesn't have an assigned term
+  typeSigNoValErr :: (Identifier, TempTopLevel) -> ExplodeError
+  typeSigNoValErr (n, TempTop (si, sc) _)
+      = case sc of
+          Just j_sc -> TypeSignatureWithoutDefinition si n j_sc
+          -- if this happens, it's a bug in the compiler, rather than source code
+          Nothing  -> error "Panic: type signature definition present without actual signature"
+  -- type signature already defined
+  typeSigReDefErr :: (Identifier, TempTopLevel) -> SourceInfo -> ExplodeError
+  typeSigReDefErr (n, TempTop (_, sc) _) si'
+        = TypeSignatureRedefinition si' n sc
 
-explodePackage :: Package -> Either [ExplodeError] (Untyped.Package [Untyped.ImportReference])
+explodePackage :: Package -> Writer [ExplodeError] (Untyped.Package [Untyped.ImportReference])
 explodePackage (Package (PackageDeclaration si name) definitions) = do
   (is, ds) <- explodeTopLevel name definitions
   return (Untyped.Package (Untyped.PackageDeclaration (Metadata si) name) is ds)

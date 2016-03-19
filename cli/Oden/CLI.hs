@@ -13,6 +13,7 @@ import           Oden.Output.Parser              ()
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
+import           Control.Monad.Writer
 import           Data.Maybe
 
 import           System.Console.GetOpt
@@ -120,6 +121,11 @@ liftEither = either (printOutput >=> throwError) return
 
 liftEither' :: Output.OdenOutput e => Either [e] b -> CLI b
 liftEither' = either (printOutputs >=> throwError) return
+
+liftWriter :: Output.OdenOutput e => Writer [e] b -> CLI b
+liftWriter w = case runWriter w of
+                (res, []) -> return res
+                (_, err)  -> (printOutputs >=> throwError) err
 
 logWarning :: Output.OdenOutput o => o -> CLI ()
 logWarning o = do

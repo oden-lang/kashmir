@@ -24,7 +24,7 @@ typeUnit = TCon predefined (nameInUniverse "unit")
 
 functions :: [(Identifier, Scheme)]
 functions = [
-  (Identifier "len", Forall predefined [TVarBinding predefined (TV "a")] (TUncurriedFn predefined [TSlice predefined (TVar predefined (TV "a"))] typeInt))
+  (Identifier "len", Forall predefined [TVarBinding predefined (TV "a")] (TUncurriedFn predefined [TSlice predefined (TVar predefined (TV "a"))] [typeInt]))
   ]
 
 types :: [(String, Type)]

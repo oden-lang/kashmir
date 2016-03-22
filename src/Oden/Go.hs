@@ -11,7 +11,6 @@ module Oden.Go (
   importer
 ) where
 
-
 import qualified Oden.Core                  as Core
 import           Oden.Go.Types              as G
 import           Oden.Identifier
@@ -127,27 +126,19 @@ convertType (G.Array _ _) = Left "Arrays"
 convertType (Slice t) = Poly.TSlice missing <$> convertType t
 convertType Interface{} = Right $ Poly.TAny missing
 convertType (Signature _ (Just _) _ _) = Left "Methods (functions with receivers)"
-convertType (Signature False Nothing args []) = do
+convertType (Signature False Nothing args ret) = do
   as <- mapM convertType args
-  Right (Poly.TUncurriedFn missing as typeUnit)
-convertType (Signature False Nothing args [ret]) = do
-  as <- mapM convertType args
-  r <- convertType ret
-  Right (Poly.TUncurriedFn missing as r)
-convertType (Signature False Nothing args _) = do
-  as <- mapM convertType args
-  Right (Poly.TUncurriedFn missing as typeUnit)
-convertType (Signature True Nothing [] []) = Left "Variadic functions with no arguments"
-convertType (Signature True Nothing args [ret]) = do
+  case mapM convertType ret of
+    Left _ -> Right (Poly.TUncurriedFn missing as [typeUnit])   -- unsupported return types
+    Right [] -> Right (Poly.TUncurriedFn missing as [typeUnit]) -- no return type
+    Right rs -> Right (Poly.TUncurriedFn missing as rs)
+convertType (Signature True Nothing args ret) = do
   as <- mapM convertType (init args)
   v <- convertType (last args)
-  r <- convertType ret
-  Right (Poly.TVariadicFn missing as v r)
-convertType (Signature True Nothing args _) = do
-  as <- mapM convertType (init args)
-  v <- convertType (last args)
-  Right (Poly.TVariadicFn missing as v typeUnit)
--- convertType (Signature _ Nothing _ _) = Left "Functions with multiple return values"
+  case mapM convertType ret of
+    Left _ -> Right (Poly.TVariadicFn missing as v [typeUnit]) -- unsupported return type
+    Right [] -> Right (Poly.TVariadicFn missing as v [typeUnit]) -- no return type
+    Right rs -> Right (Poly.TVariadicFn missing as v rs)
 convertType (Named pkgName n t@Struct{}) =
   Poly.TNamed missing (FQN pkgName (Identifier n)) <$> convertType t
 convertType (Named _ _ t) = convertType t

@@ -139,7 +139,7 @@ spec = describe "inferExpr" $ do
     `shouldSucceedWith`
     (forall [] typeAny,
      tUncurriedFnApplication
-      (tSymbol (Identifier "identity") (typeUncurried [typeAny] typeAny))
+      (tSymbol (Identifier "identity") (typeUncurried [typeAny] [typeAny]))
       [tLiteral (tBool False) typeBool]
       typeAny)
 
@@ -169,9 +169,9 @@ spec = describe "inferExpr" $ do
     `shouldSucceedWith`
     (forall [] typeAny,
      tUncurriedFnApplication
-      (tSymbol (Identifier "identity") (typeUncurried [typeAny] typeAny))
+      (tSymbol (Identifier "identity") (typeUncurried [typeAny] [typeAny]))
       [tUncurriedFnApplication
-       (tSymbol (Identifier "identity") (typeUncurried [typeAny] typeAny))
+       (tSymbol (Identifier "identity") (typeUncurried [typeAny] [typeAny]))
        [tLiteral (tBool False) typeBool]
        typeAny]
       typeAny)
@@ -215,7 +215,7 @@ spec = describe "inferExpr" $ do
     inferExpr predef (uApplication (uSymbol (Identifier "len")) [uSlice [uLiteral (uBool True)]])
     `shouldSucceedWith`
     (forall [] typeInt,
-     tUncurriedFnApplication (Core.Symbol missing (Identifier "len") (TUncurriedFn missing [TSlice predefined typeBool] typeInt))
+     tUncurriedFnApplication (Core.Symbol missing (Identifier "len") (TUncurriedFn missing [TSlice predefined typeBool] [typeInt]))
                             [Core.Slice missing [Core.Literal missing (tBool True) typeBool] (typeSlice typeBool)]
      typeInt)
 
@@ -225,7 +225,7 @@ spec = describe "inferExpr" $ do
                                                 ,uLiteral (uInt 1)])
     `shouldSucceedWith`
     (forall [] typeInt,
-     tUncurriedFnApplication (tSymbol (Identifier "max") (typeUncurried [typeInt, typeInt] typeInt))
+     tUncurriedFnApplication (tSymbol (Identifier "max") (typeUncurried [typeInt, typeInt] [typeInt]))
                             [tLiteral (tInt 0) typeInt
                             ,tLiteral (tInt 1) typeInt]
      typeInt)
@@ -236,7 +236,7 @@ spec = describe "inferExpr" $ do
                                                         ,uLiteral (uInt 1)])
     `shouldSucceedWith`
     (forall [] typeInt,
-     tUncurriedFnApplication (tSymbol (Identifier "max") (typeVariadic [] typeInt typeInt))
+     tUncurriedFnApplication (tSymbol (Identifier "max") (typeVariadic [] typeInt [typeInt]))
                             [tSlice [tLiteral (tInt 0) typeInt
                                         ,tLiteral (tInt 1) typeInt] typeInt]
      typeInt)
@@ -245,7 +245,7 @@ spec = describe "inferExpr" $ do
     inferExpr predefAndMaxVariadic (uApplication (uSymbol (Identifier "max")) [])
     `shouldSucceedWith`
     (forall [] typeInt,
-     tUncurriedFnApplication (tSymbol (Identifier "max") (typeVariadic [] typeInt typeInt))
+     tUncurriedFnApplication (tSymbol (Identifier "max") (typeVariadic [] typeInt [typeInt]))
                             [tSlice [] typeInt]
      typeInt)
 

@@ -1,0 +1,9 @@
+package void/main
+
+import fmt
+
+main() =
+  let
+    x = fmt.Print("unit: ")
+  in
+    fmt.Println(x)

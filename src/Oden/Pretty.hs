@@ -169,15 +169,16 @@ instance Pretty QualifiedName where
 
 instance Pretty Poly.Type where
   pp (Poly.TAny _) = text "any"
-  pp (Poly.TTuple _ f s r) =
-    brackets (hcat (punctuate (text ", ") (map pp (f:s:r))))
+  pp (Poly.TTuple _ f s r) = commaSepParens (f:s:r)
   pp (Poly.TVar _ v) = pp v
   pp (Poly.TCon _ (FQN [] (Identifier "unit"))) = text "()"
   pp (Poly.TCon _ n) = pp n
   pp (Poly.TNoArgFn _ t) = rArr <+> pp t
   pp (Poly.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (Poly.TUncurriedFn _ as r) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
-  pp (Poly.TVariadicFn _ as v r) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
+  pp (Poly.TUncurriedFn _ as [r]) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
+  pp (Poly.TUncurriedFn _ as rs) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> braces (hsep (punctuate (text "&") (map pp rs)))
+  pp (Poly.TVariadicFn _ as v [r]) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
+  pp (Poly.TVariadicFn _ as v rs) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> braces (hsep (punctuate (text "&") (map pp rs)))
   pp (Poly.TSlice _ t) =
     text "[]" <> braces (pp t)
   pp (Poly.TNamed _ n _) = pp n
@@ -216,8 +217,10 @@ instance Pretty Mono.Type where
   pp (Mono.TCon _ n) = pp n
   pp (Mono.TNoArgFn _ t) = rArr <+> pp t
   pp (Mono.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (Mono.TUncurriedFn _ as r) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
-  pp (Mono.TVariadicFn _ as v r) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
+  pp (Mono.TUncurriedFn _ as [r]) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> pp r
+  pp (Mono.TUncurriedFn _ as rs) = hsep (punctuate (text "&") (map pp as)) <+> rArr <+> parens (hsep (punctuate (text ", ") (map pp rs)))
+  pp (Mono.TVariadicFn _ as v [r]) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> pp r
+  pp (Mono.TVariadicFn _ as v rs) = hsep (punctuate (text "&") (map pp as ++ [pp v <> text "*"])) <+> rArr <+> parens (hsep (punctuate (text ", ") (map pp rs)))
   pp (Mono.TSlice _ t) =
     text "!" <> braces (pp t)
   pp (Mono.TNamed _ n _) = pp n

@@ -57,14 +57,14 @@ unifies _ (TCon _ n1) (TCon _ n2)
   | n1 == n2 = return emptySubst
 unifies si (TFn _ t1 t2) (TFn _ t3 t4) = unifyMany si [t1, t2] [t3, t4]
 unifies si (TNoArgFn _ t1) (TNoArgFn _ t2) = unifies si t1 t2
-unifies si (TUncurriedFn _ as1 r1) (TUncurriedFn _ as2 r2) = do
+unifies si (TUncurriedFn _ as1 rs1) (TUncurriedFn _ as2 rs2) = do
   a <- unifyMany si as1 as2
-  r <- unifies si r1 r2
+  r <- unifyMany si rs1 rs2
   return (a `compose` r)
-unifies si (TVariadicFn _ as1 v1 r1) (TVariadicFn _ as2 v2 r2) = do
+unifies si (TVariadicFn _ as1 v1 rs1) (TVariadicFn _ as2 v2 rs2) = do
   a <- unifyMany si as1 as2
   v <- unifies si v1 v2
-  r <- unifies si r1 r2
+  r <- unifyMany si rs1 rs2
   return (a `compose` v `compose` r)
 unifies si (TTuple _ f1 s1 r1) (TTuple _ f2 s2 r2) = do
   f <- unifies si f1 f2

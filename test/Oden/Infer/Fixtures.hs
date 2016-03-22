@@ -124,15 +124,15 @@ predefAndStringLength =  predef `extend` (Identifier "stringLength",
 
 predefAndMax :: TypingEnvironment
 predefAndMax =  predef `extend` (Identifier "max",
-                                 Local predefined (Identifier "max") $ forall [] (typeUncurried [typeInt, typeInt] typeInt))
+                                 Local predefined (Identifier "max") $ forall [] (typeUncurried [typeInt, typeInt] [typeInt]))
 
 predefAndMaxVariadic :: TypingEnvironment
 predefAndMaxVariadic = predef `extend` (Identifier "max",
-                                        Local predefined (Identifier "max") $ forall [] (typeVariadic [] typeInt typeInt))
+                                        Local predefined (Identifier "max") $ forall [] (typeVariadic [] typeInt [typeInt]))
 
 predefAndIdentityAny :: TypingEnvironment
 predefAndIdentityAny = predef `extend` (Identifier "identity",
-                                        Local predefined (Identifier "identity") $ forall [] (typeUncurried [typeAny] typeAny))
+                                        Local predefined (Identifier "identity") $ forall [] (typeUncurried [typeAny] [typeAny]))
 
 fooBarPkgEnv :: TypingEnvironment
 fooBarPkgEnv = predef `extend` (Identifier "foo",

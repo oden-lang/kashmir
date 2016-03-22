@@ -239,6 +239,14 @@ codegenToTupleWrapper t1 t2 tr =
                           braces (hcat (punctuate comma (map text argNames)))
     return $ func empty (hcat (punctuate comma fnArgs)) fnType fnBody
 
+-- | Wraps the provided code in a function that returns unit
+voidToUnitWrapper :: Doc -> Doc
+voidToUnitWrapper code = func empty empty tunit body <+> parens empty
+  where
+    tunit = text "struct{}"
+    body = braces $ code <+> text "; return struct{}{} "
+
+
 codegenExpr :: Expr Mono.Type -> Codegen Doc
 codegenExpr (Symbol _ i _) =
   codegenIdentifier i
@@ -259,7 +267,15 @@ codegenExpr (Application _ f p _) =
 
 codegenExpr (UncurriedFnApplication _ f ps _) =
   case typeOf f of
-    -- If there are more return values, we convert them to a tuple
+    -- go functions that return unit are (almost always) void functions
+    -- we wrap them to make the call to them return unit
+    Mono.TUncurriedFn _ _ [t] | isUniverseTypeConstructor "unit" t -> do
+      fnCall <- codegenRawUncurredFnApplication f ps
+      return $ voidToUnitWrapper fnCall
+    Mono.TVariadicFn _ _ _ [t] | isUniverseTypeConstructor "unit" t -> do
+      fnCall <- codegenRawUncurredFnApplication f ps
+      return $ voidToUnitWrapper fnCall
+    -- If there are multiple return values, we convert them to a tuple
     Mono.TUncurriedFn _ _ (t1:t2:tr) -> do
       fnCall <- codegenRawUncurredFnApplication f ps
       wrapperFn <- codegenToTupleWrapper t1 t2 tr

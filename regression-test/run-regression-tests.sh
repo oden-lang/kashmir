@@ -10,7 +10,7 @@ fi
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ODEN=$DIR/../dist/build/cli/cli
-if ! `which $ODEN` ; then
+if ! hash $ODEN ; then
   ODEN=$DIR/../dist/oden/bin/oden
 fi
 

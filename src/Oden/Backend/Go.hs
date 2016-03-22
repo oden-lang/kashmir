@@ -63,24 +63,6 @@ isUniverseTypeConstructor _ _ = False
 
 
 return' :: Expr Mono.Type -> Codegen Doc
-return' e@(Application _ f _ t) | isUniverseTypeConstructor "unit" t = do
-  ec <- codegenExpr e
-  return $ case typeOf f of
-    Mono.TUncurriedFn{} -> ec $+$ text "return struct{}{}"
-    Mono.TVariadicFn{}  -> ec $+$ text "return struct{}{}"
-    _                   -> text "return" <+> ec
-return' e@(NoArgApplication _ f t) | isUniverseTypeConstructor "unit" t = do
-  ec <- codegenExpr e
-  return $ case typeOf f of
-    Mono.TUncurriedFn{} -> ec $+$ text "return struct{}{}"
-    Mono.TVariadicFn{}  -> ec $+$ text "return struct{}{}"
-    _                   -> text "return" <+> ec
-return' e@(UncurriedFnApplication _ f _ t) | isUniverseTypeConstructor "unit" t = do
-  ec <- codegenExpr e
-  return $ case typeOf f of
-    Mono.TUncurriedFn{} -> ec $+$ text "return struct{}{}"
-    Mono.TVariadicFn{}  -> ec $+$ text "return struct{}{}"
-    _                   -> text "return" <+> ec
 return' expr = do
   ec <- codegenExpr expr
   return $ text "return" <+> ec

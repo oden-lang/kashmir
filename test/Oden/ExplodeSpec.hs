@@ -1,6 +1,5 @@
 module Oden.ExplodeSpec where
 
-import           Control.Monad.Writer
 import qualified Oden.Core.Untyped     as U
 import qualified Oden.Explode          as E
 import           Oden.Explode          hiding (explodeTopLevel)
@@ -22,42 +21,36 @@ ignored = Metadata Missing
 
 explodeTopLevel = E.explodeTopLevel ["pkg"]
 
-toEither :: (Eq v, Show v, Show e) => Writer [e] v -> Either e v
-toEither w = case es of
-               [] -> Right a
-               (e : _) -> Left e
-  where (a, es) = runWriter w
-
 spec :: Spec
 spec = do
   describe "explodeExpr" $ do
     it "converts symbol" $
-      toEither (explodeExpr (Symbol (src 1 1) (Identifier "x")))
+       explodeExpr (Symbol (src 1 1) (Identifier "x"))
       `shouldSucceedWith`
       U.Symbol ignored (Identifier "x")
 
     it "converts int literal" $
-      toEither (explodeExpr (Literal (src 1 1) (Int 1)))
+       explodeExpr (Literal (src 1 1) (Int 1))
       `shouldSucceedWith`
       U.Literal ignored (U.Int 1)
 
     it "converts bool literal" $
-      toEither (explodeExpr (Literal (src 1 1) (Bool True)))
+       explodeExpr (Literal (src 1 1) (Bool True))
       `shouldSucceedWith`
       U.Literal ignored (U.Bool True)
 
     it "converts fn application with no params" $
-      toEither (explodeExpr (Application
+       explodeExpr (Application
                    (src 1 1)
                    (Fn (src 1 1) [] (Symbol (src 1 3) (Identifier "x")))
-                   []))
+                   [])
       `shouldSucceedWith`
       U.Application
       ignored
       (U.NoArgFn ignored (U.Symbol ignored (Identifier "x"))) []
 
     it "converts fn application with multiple params" $
-      toEither (explodeExpr (Application
+       explodeExpr (Application
                    (src 1 1)
                    (Fn
                     (src 1 1)
@@ -65,7 +58,7 @@ spec = do
                      NameBinding (src 1 3) (Identifier "y")]
                     (Symbol (src 1 4) (Identifier "x")))
                    [Symbol (src 1 5) (Identifier "x"),
-                    Symbol (src 1 9) (Identifier "y")]))
+                    Symbol (src 1 9) (Identifier "y")])
       `shouldSucceedWith`
       U.Application
       ignored
@@ -81,16 +74,16 @@ spec = do
 
   describe "explodeTopLevel" $ do
     it "converts fn definition with no argument" $
-      toEither (snd <$> explodeTopLevel [FnDefinition (src 1 1) (Identifier "f") [] (Symbol (src 1 3) (Identifier "x"))])
+       snd <$> explodeTopLevel [FnDefinition (src 1 1) (Identifier "f") [] (Symbol (src 1 3) (Identifier "x"))]
       `shouldSucceedWith`
       [U.Definition ignored (Identifier "f") Nothing (U.NoArgFn ignored (U.Symbol ignored (Identifier "x")))]
 
     it "converts fn definition with single argument" $
-      toEither (snd <$> explodeTopLevel [FnDefinition
+       snd <$> explodeTopLevel [FnDefinition
                                 (src 1 1)
                                 (Identifier "f")
                                 [NameBinding (src 1 2) (Identifier "x")]
-                                (Symbol (src 1 3) (Identifier "x"))])
+                                (Symbol (src 1 3) (Identifier "x"))]
       `shouldSucceedWith`
       [U.Definition
        ignored
@@ -102,11 +95,11 @@ spec = do
         (U.Symbol ignored (Identifier "x")))]
 
     it "converts fn definition with multiple arguments" $
-      toEither (snd <$> explodeTopLevel [FnDefinition
+       snd <$> explodeTopLevel [FnDefinition
                                 (src 1 1)
                                 (Identifier "f")
                                 [NameBinding (src 1 2) (Identifier "x"), NameBinding (src 1 3) (Identifier "y")]
-                                (Symbol (src 1 4) (Identifier "x"))])
+                                (Symbol (src 1 4) (Identifier "x"))]
       `shouldSucceedWith`
       [U.Definition
        ignored
@@ -121,10 +114,10 @@ spec = do
          (U.Symbol ignored (Identifier "x"))))]
 
     it "converts struct definition and uses empty list for type parameters" $
-      toEither (snd <$> explodeTopLevel [TypeDefinition
+       snd <$> explodeTopLevel [TypeDefinition
                                 (src 1 1)
                                 (Identifier "S")
-                                (TSStruct (src 1 2) [TSStructField (src 1 3) (Identifier "x") (TSSymbol (src 1 4) (Identifier "t"))])])
+                                (TSStruct (src 1 2) [TSStructField (src 1 3) (Identifier "x") (TSSymbol (src 1 4) (Identifier "t"))])]
       `shouldSucceedWith`
       [U.TypeDefinition
        ignored

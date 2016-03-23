@@ -45,7 +45,7 @@ compileFile :: SourceFile -> CLI MonomorphedPackage
 compileFile (OdenSourceFile fname _) = do
   -- TODO: Check package name
   syntaxPkg <- readPackage fname
-  untypedPkg <- liftWriter (explodePackage syntaxPkg)
+  untypedPkg <- liftEither' (explodePackage syntaxPkg)
   (untypedPkgWithImports, warnings) <- liftIO (resolveImports Go.importer untypedPkg) >>= liftEither
   mapM_ logWarning warnings
   inferredPkg <- liftEither (inferPackage untypedPkgWithImports)

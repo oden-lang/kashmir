@@ -30,8 +30,8 @@ instance OdenOutput ExplodeError where
     = case ts of
         Just ts' -> text "Duplicate type signature for" <+> code s (pp n)
                     <+> text ". Already defined as" <+> code s (pp ts')
-        Nothing -> text "Value with the same name" <+> code s (pp n)
-                   <+> text "already defined."
+        Nothing -> text "Type signature must precede the definition for"
+                   <+> code s (pp n)
   details (InvalidMemberAccessExpression _ expr' _) s =
     text "In the expression" <+> code s (pp expr')
 

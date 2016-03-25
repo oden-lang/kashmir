@@ -91,7 +91,7 @@ dist/oden: dist/build-oden-cli/bin/oden
 	cp dist/build-oden-cli/bin/oden dist/oden/bin/oden
 
 $(DIST_ARCHIVE): dist/oden
-	(cd dist/oden && tar -czf ../$(DIST_NAME).tar.gz .)
+	(cd dist && tar -czf $(DIST_NAME).tar.gz oden)
 
 dist: $(DIST_ARCHIVE)
 

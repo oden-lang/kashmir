@@ -1,18 +1,21 @@
 -- | This module queries the Go importer for available definitions in Go
--- packages in the system. All Go types and constructs are not support by Oden
--- (yet) so it also returns 'UnsupportedTypesWarning's for those types which
--- it ignores.
+-- packages in the system and converts those definitions to the Oden type
+-- system.
+--
+-- All Go types and constructs are not support by Oden (yet) so it returns
+-- 'UnsupportedTypesWarning's for those types which it ignores.
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE ScopedTypeVariables      #-}
-module Oden.Go (
+module Oden.Go.Importer (
   PackageImportError(..),
   UnsupportedTypesWarning(..),
   importer
 ) where
 
 import qualified Oden.Core                  as Core
-import           Oden.Go.Types              as G
+import           Oden.Go.Type               as G
+import qualified Oden.Go.Identifier         as GI
 import           Oden.Identifier
 import           Oden.Imports
 import           Oden.Metadata
@@ -46,20 +49,26 @@ instance FromJSON StructField where
   parseJSON (Object o) = StructField <$> o .: "name" <*> o .: "type"
   parseJSON v = fail ("Unexpected: " ++ show v)
 
+instance FromJSON GI.Identifier where
+  parseJSON (String s) = return (GI.Identifier (T.unpack s))
+  parseJSON v = fail ("Expecting a string but got: " ++ show v)
+
 instance FromJSON Type where
   parseJSON (Object o) = do
     kind :: String <- o .: "kind"
     case kind of
       "basic"         -> Basic <$> o .: "name" <*> o .: "untyped"
       "pointer"       -> Pointer <$> o .: "inner"
-      "interface"     -> return Interface
+      "interface"     -> return (Interface [])
       "array"         -> G.Array <$> o .: "length"
                                  <*> o .: "inner"
       "slice"         -> Slice <$> o .: "inner"
-      "signature"     -> Signature <$> o .: "variadic"
-                                   <*> o `optOrNull` "recv"
-                                   <*> o .: "arguments"
-                                   <*> o .: "returns"
+      "signature"     -> do
+        isVariadic <- o .: "variadic"
+        receiver <- o `optOrNull` "recv"
+        params <- o .: "params"
+        returns <- o .: "returns"
+        return (Signature receiver (Parameters params isVariadic) (Returns returns))
       "struct"        -> Struct <$> o .: "fields"
       "named"         -> Named <$> o .: "pkg" <*> o .: "name" <*> o .: "underlying"
       "unsupported"   -> Unsupported <$> o .: "name"
@@ -122,37 +131,36 @@ fresh = do
   return (Poly.TV ("_g" ++ show n))
 
 convertType :: G.Type -> Converter Poly.Type
--- TODO: Add "Untyped constant" concept in Oden type system
--- and/or consider how macros would relate to this.
-convertType (Basic "bool" False) = return typeBool
-convertType (Basic "int" False) = return typeInt
-convertType (Basic "rune" False) = return typeInt
-convertType (Basic "string" False) = return typeString
-convertType (Basic "nil" False) = throwError "nil constants"
-convertType (Basic n False) = throwError ("Basic type: " ++ n)
-convertType (Basic n True) = throwError ("Basic untyped: " ++ n)
+-- TODO: Add, or map, "Untyped constant" concept to Oden type system.
+convertType (Basic (GI.Identifier "bool") False) = return typeBool
+convertType (Basic (GI.Identifier "int") False) = return typeInt
+convertType (Basic (GI.Identifier "rune") False) = return typeInt
+convertType (Basic (GI.Identifier "string") False) = return typeString
+convertType (Basic (GI.Identifier "nil") False) = throwError "nil constants"
+convertType (Basic n False) = throwError ("Basic type: " ++ show n)
+convertType (Basic n True) = throwError ("Basic untyped: " ++ show n)
 convertType (Pointer _) = throwError "Pointers"
 convertType (G.Array _ _) = throwError "Arrays"
 convertType (Slice t) = Poly.TSlice missing <$> convertType t
 convertType Interface{} = do
   t <- fresh
   return $ Poly.TVar missing t
-convertType (Signature _ (Just _) _ _) = throwError "Methods (functions with receivers)"
-convertType (Signature isVariadic Nothing params ret) = do
+convertType (Signature (Just _) _ _) = throwError "Methods (functions with receivers)"
+convertType (Signature Nothing (Parameters params isVariadic) (Returns ret)) = do
   ps <- mapM convertType params
   catchError (wrapReturns ps <$> mapM convertType ret)
              (const $ return (Poly.TForeignFn missing isVariadic ps [typeUnit]))
   where
   wrapReturns ps [] = Poly.TForeignFn missing isVariadic ps [typeUnit] -- no return type
   wrapReturns ps rs = Poly.TForeignFn missing isVariadic ps rs
-convertType (Named pkgName n t@Struct{}) =
+convertType (Named pkgName (GI.Identifier n) t@Struct{}) =
   Poly.TNamed missing (FQN pkgName (Identifier n)) <$> convertType t
 convertType (Named _ _ t) = convertType t
 convertType (Struct fields) = do
   fields' <- foldM convertField (Poly.REmpty (Metadata Missing)) fields
   return (Poly.TRecord missing fields')
   where
-  convertField row (StructField name goType) =
+  convertField row (StructField (GI.Identifier name) goType) =
     Poly.RExtension missing (Identifier name) <$> convertType goType <*> return row
 convertType (Unsupported n) = throwError n
 

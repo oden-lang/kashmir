@@ -7,7 +7,7 @@ import           Oden.Compiler.Monomorphization  (MonomorphedPackage(..))
 import           Oden.Compiler.Validation
 import qualified Oden.Core                       as Core
 import           Oden.Explode
-import qualified Oden.Go                         as Go
+import qualified Oden.Go.Importer                as Go
 import           Oden.Imports
 import           Oden.Infer
 import           Oden.Parser                     (parsePackage)

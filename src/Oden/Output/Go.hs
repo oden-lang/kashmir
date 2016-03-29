@@ -3,7 +3,7 @@ module Oden.Output.Go where
 import           Data.List
 import           Text.PrettyPrint
 
-import           Oden.Go as G
+import           Oden.Go.Importer as G
 import           Oden.Output
 import           Oden.Pretty
 

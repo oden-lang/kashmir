@@ -22,6 +22,7 @@ library
     transformers  >= 0.4.2 && <0.5,
     aeson         >= 0.10,
     pcre-heavy    >= 1.0,
+    wl-pprint     >= 1.2,
     bytestring,
     unordered-containers,
     vector,
@@ -49,8 +50,11 @@ library
     Oden.Infer.Substitution,
     Oden.Infer.Subsumption,
     Oden.Infer.Unification,
-    Oden.Go,
-    Oden.Go.Types,
+    Oden.Go.AST,
+    Oden.Go.Identifier,
+    Oden.Go.Importer,
+    Oden.Go.Pretty,
+    Oden.Go.Type,
     Oden.Lexer,
     Oden.Metadata,
     Oden.Output,
@@ -116,5 +120,6 @@ test-suite spec
     pretty        >= 1.1   && <1.2,
     transformers  >= 0.4.2 && <0.5,
     containers    >= 0.4   && <0.6,
+    wl-pprint     >= 1.2,
     oden
   ghc-options: -Wall -fno-warn-orphans -fno-warn-missing-signatures

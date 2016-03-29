@@ -51,11 +51,11 @@ func NewStruct(fields []StructField) Struct {
 }
 
 type Signature struct {
-	Kind      string `json:"kind"`
-	Variadic  bool   `json:"variadic"`
-	Recv      *Type  `json:"recv"`
-	Arguments []Type `json:"arguments"`
-	Returns   []Type `json:"returns"`
+	Kind     string `json:"kind"`
+	Variadic bool   `json:"variadic"`
+	Recv     *Type  `json:"recv"`
+	Params   []Type `json:"params"`
+	Returns  []Type `json:"returns"`
 }
 
 func NewSignature(variadic bool, recv *Type, arguments, returns []Type) Signature {

@@ -85,6 +85,15 @@ spec =
         `shouldPrintAs`
         "func (x int) int {\n    return x\n}"
 
+      it "prints a function literal with a variadic parameter" $
+        FunctionLiteral
+        (FunctionSignature
+         [VariadicFunctionParameter (Identifier "_") (Basic (Identifier "int") False)]
+         [])
+        (Block [])
+        `shouldPrintAs`
+        "func (_ ...int) {}"
+
     describe "Declaration" $ do
 
       it "prints a type declaration" $

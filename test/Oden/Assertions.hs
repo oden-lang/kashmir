@@ -1,8 +1,6 @@
 module Oden.Assertions where
 
-import Oden.Pretty
-
-import Text.PrettyPrint
+import           Text.PrettyPrint.Leijen hiding ((<$>))
 
 import           Test.Hspec
 
@@ -32,7 +30,7 @@ res `shouldFailWith` err = res `shouldSatisfy` (== Left err)
 newtype PrettyWrapper a = PrettyWrapper a deriving (Eq)
 
 instance Pretty a => Show (PrettyWrapper a) where
-  show (PrettyWrapper x) = render $ pp x
+  show (PrettyWrapper x) = displayS (renderPretty 0.4 100 (pretty x)) ""
 
 shouldSucceed' :: (Eq a, Pretty a, Show e) => Either e a -> Expectation
 shouldSucceed' = shouldSucceed . (PrettyWrapper <$>)

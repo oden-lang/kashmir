@@ -1,5 +1,9 @@
-{-# LANGUAGE QuasiQuotes, FlexibleContexts #-}
-module Oden.Backend.Go where
+{-# LANGUAGE FlexibleContexts #-}
+module Oden.Backend.Go (
+  GoBackend(),
+  prelude,
+  genPackage
+) where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
@@ -221,7 +225,7 @@ genExpr expr = case expr of
     AST.BinaryOp (genBinaryOperator o) <$> genExpr lhs <*> genExpr rhs
   Application _ f arg _ ->
     AST.Expression <$> (AST.Application <$> genPrimaryExpression f
-                                        <*> ((:[]) <$> AST.Argument <$> genExpr arg))
+                                        <*> (((:[]) . AST.Argument) <$> genExpr arg))
   ForeignFnApplication _ f args _ ->
     case typeOf f of
 
@@ -325,8 +329,9 @@ genBlock expr = (AST.Block . (:[]) . AST.ReturnStmt . (:[])) <$> genExpr expr
 
 genTopLevel :: Identifier -> Mono.Type -> Expr Mono.Type -> Codegen AST.TopLevelDeclaration
 genTopLevel (Identifier "main") (Mono.TNoArgFn _ t) (NoArgFn _ body _) | isUniverseTypeConstructor "unit" t = do
-  body' <- genExpr body
-  let block = AST.Block [AST.SimpleStmt (AST.ExpressionStmt body')]
+  block <- case body of
+    Block _ [] _ -> return (AST.Block [])
+    _          -> AST.Block . (:[]) . AST.SimpleStmt . AST.ExpressionStmt <$> genExpr body
   return (AST.FunctionDecl (GI.Identifier "main") (AST.FunctionSignature [] []) block)
 genTopLevel name _ (NoArgFn _ body (Mono.TNoArgFn _ returnType)) = do
   name' <- genIdentifier name

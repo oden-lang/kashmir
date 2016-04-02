@@ -9,6 +9,7 @@ import           Oden.Identifier
 import           Oden.Metadata
 import           Oden.Predefined
 import           Oden.Type.Polymorphic
+import           Oden.Pretty ()
 
 import           Oden.Assertions
 import           Oden.Infer.Fixtures

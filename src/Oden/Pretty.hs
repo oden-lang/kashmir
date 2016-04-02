@@ -15,254 +15,253 @@ import           Oden.Type.Signature
 import           Data.List             (intersperse)
 import           Data.Set              (toList)
 
-import           Text.PrettyPrint
-
-class Pretty e where
-  pp :: e -> Doc
+import           Text.PrettyPrint.Leijen
 
 commaSepParens :: Pretty p => [p] -> Doc
-commaSepParens ps = parens (hcat (punctuate (text ", ") (map pp ps)))
+commaSepParens ps = parens (hcat (punctuate (text ", ") (map pretty ps)))
 
 rArr :: Doc
 rArr = text "->"
 
 instance Pretty Untyped.NameBinding where
-  pp (Untyped.NameBinding _ identifier) = pp identifier
+  pretty (Untyped.NameBinding _ identifier) = pretty identifier
 
 instance Pretty Untyped.Range where
-  pp (Untyped.Range e1 e2) = brackets $ pp e1 <+> text ":" <+> pp e2
-  pp (Untyped.RangeTo e) = brackets $ text ":" <+> pp e
-  pp (Untyped.RangeFrom e) = brackets $ pp e <+> text ":"
+  pretty (Untyped.Range e1 e2) = brackets $ pretty e1 <+> text ":" <+> pretty e2
+  pretty (Untyped.RangeTo e) = brackets $ text ":" <+> pretty e
+  pretty (Untyped.RangeFrom e) = brackets $ pretty e <+> text ":"
 
 instance Pretty Untyped.FieldInitializer where
-  pp (Untyped.FieldInitializer _ label expr) = pp label <+> text "=" <+> pp expr
+  pretty (Untyped.FieldInitializer _ label expr) = pretty label <+> text "=" <+> pretty expr
 
 instance Pretty Untyped.Expr where
-  pp (Untyped.Symbol _ i) = pp i
-  pp (Untyped.Subscript _ s i) = pp s <> text "[" <> pp i <> text "]"
-  pp (Untyped.Subslice _ s r) = pp s <> pp r
-  pp (Untyped.UnaryOp _ op e) = pp op <+> pp e
-  pp (Untyped.BinaryOp _ op e1 e2) = parens (pp e1 <+> pp op <+> pp e2)
-  pp (Untyped.Application _ f a) = pp f <> commaSepParens a
-  pp (Untyped.Fn _ n b) = parens (pp n) <+> rArr <+> pp b
-  pp (Untyped.NoArgFn _ b) = parens empty <+> rArr <+> pp b
-  pp (Untyped.Let _ n e b) =
-    text "let" <+> pp n <+> equals <+> pp e <+> text "in" <+> pp b
-  pp (Untyped.Literal _ (Untyped.Int n)) = integer n
-  pp (Untyped.Literal _ (Untyped.Bool True)) = text "true"
-  pp (Untyped.Literal _ (Untyped.Bool False)) = text "false"
-  pp (Untyped.Literal _ (Untyped.String s)) = text (show s)
-  pp (Untyped.Literal _ Untyped.Unit{}) = text "()"
-  pp (Untyped.Tuple _ f s r) = commaSepParens (f:s:r)
-  pp (Untyped.If _ c t e) =
-    text "if" <+> pp c <+> text "then" <+> pp t <+> text "else" <+> pp e
-  pp (Untyped.Slice _ es) =
-    text "[]" <> braces (hcat (punctuate (text ", ") (map pp es)))
-  pp (Untyped.Block _ es) =
-    braces (vcat (map pp es))
-  pp (Untyped.RecordInitializer _ fields) =
-    braces (hcat (punctuate (text ", ") (map pp fields)))
-  pp (Untyped.MemberAccess _ pkgAlias name) =
-    pp pkgAlias <> text "." <> pp name
+  pretty (Untyped.Symbol _ i) = pretty i
+  pretty (Untyped.Subscript _ s i) = pretty s <> text "[" <> pretty i <> text "]"
+  pretty (Untyped.Subslice _ s r) = pretty s <> pretty r
+  pretty (Untyped.UnaryOp _ op e) = pretty op <+> pretty e
+  pretty (Untyped.BinaryOp _ op e1 e2) = parens (pretty e1 <+> pretty op <+> pretty e2)
+  pretty (Untyped.Application _ f a) = pretty f <> commaSepParens a
+  pretty (Untyped.Fn _ n b) = parens (pretty n) <+> rArr <+> pretty b
+  pretty (Untyped.NoArgFn _ b) = parens empty <+> rArr <+> pretty b
+  pretty (Untyped.Let _ n e b) =
+    text "let" <+> pretty n <+> equals <+> pretty e <+> text "in" <+> pretty b
+  pretty (Untyped.Literal _ (Untyped.Int n)) = integer n
+  pretty (Untyped.Literal _ (Untyped.Bool True)) = text "true"
+  pretty (Untyped.Literal _ (Untyped.Bool False)) = text "false"
+  pretty (Untyped.Literal _ (Untyped.String s)) = text (show s)
+  pretty (Untyped.Literal _ Untyped.Unit{}) = text "()"
+  pretty (Untyped.Tuple _ f s r) = commaSepParens (f:s:r)
+  pretty (Untyped.If _ c t e) =
+    text "if" <+> pretty c <+> text "then" <+> pretty t <+> text "else" <+> pretty e
+  pretty (Untyped.Slice _ es) =
+    text "[]" <> braces (hcat (punctuate (text ", ") (map pretty es)))
+  pretty (Untyped.Block _ es) =
+    braces (vcat (map pretty es))
+  pretty (Untyped.RecordInitializer _ fields) =
+    braces (hcat (punctuate (text ", ") (map pretty fields)))
+  pretty (Untyped.MemberAccess _ pkgAlias name) =
+    pretty pkgAlias <> text "." <> pretty name
 
 instance Pretty NameBinding where
-  pp (NameBinding _ identifier) = pp identifier
+  pretty (NameBinding _ identifier) = pretty identifier
 
 instance Pretty UnaryOperator where
-  pp Positive = text "+"
-  pp Negative = text "-"
-  pp Not      = text "!"
+  pretty Positive = text "+"
+  pretty Negative = text "-"
+  pretty Not      = text "!"
 
 instance Pretty BinaryOperator where
-  pp Add = text "+"
-  pp Subtract = text "-"
-  pp Multiply = text "*"
-  pp Divide = text "/"
-  pp Equals = text "=="
-  pp Concat = text "++"
-  pp LessThan = text "<"
-  pp GreaterThan = text ">"
-  pp LessThanEqual = text "<="
-  pp GreaterThanEqual = text ">="
-  pp And = text "&&"
-  pp Or = text "||"
+  pretty Add = text "+"
+  pretty Subtract = text "-"
+  pretty Multiply = text "*"
+  pretty Divide = text "/"
+  pretty Equals = text "=="
+  pretty Concat = text "++"
+  pretty LessThan = text "<"
+  pretty GreaterThan = text ">"
+  pretty LessThanEqual = text "<="
+  pretty GreaterThanEqual = text ">="
+  pretty And = text "&&"
+  pretty Or = text "||"
 
 instance Pretty Identifier where
-  pp (Identifier n) = text n
+  pretty (Identifier n) = text n
 
 instance Pretty t => Pretty (FieldInitializer t) where
-  pp (FieldInitializer _ l e) = pp l <+> text "=" <+> pp e
+  pretty (FieldInitializer _ l e) = pretty l <+> text "=" <+> pretty e
 
 instance Pretty t => Pretty (Expr t) where
-  pp (Symbol _ i _) = pp i
-  pp (Subscript _ s i _) = pp s <> text "[" <> pp i <> text "]"
-  pp (Subslice _ s r _) = pp s <> pp r
-  pp (UnaryOp _ op e _) = pp op <+> pp e
-  pp (BinaryOp _ op e1 e2 _) = parens (pp e1 <+> pp op <+> pp e2)
-  pp (Application _ f a _) = pp f <> text "(" <> pp a <> text ")"
-  pp (NoArgApplication _ f _) = pp f <> text "()"
-  pp (ForeignFnApplication _ f as _) = pp f <> commaSepParens as
-  pp (Fn _ n b _) = parens (parens (pp n) <+> rArr <+> pp b)
-  pp (NoArgFn _ b _) = parens empty <+> rArr <+> pp b
-  pp (Let _ n e b _) =
-    text "let" <+> pp n <+> equals <+> pp e <+> text "in" <+> pp b
-  pp (Literal _ (Int n) _) = integer n
-  pp (Literal _ (Bool True) _) = text "true"
-  pp (Literal _ (Bool False) _) = text "false"
-  pp (Literal _ (String s) _) = text (show s)
-  pp (Literal _ Unit{} _) = text "()"
-  pp (Tuple _ f s r _) = commaSepParens (f:s:r)
-  pp (If _ c t e _) =
-    text "if" <+> pp c <+> text "then" <+> pp t <+> text "else" <+> pp e
-  pp (Slice _ es _) =
-    text "[]" <> braces (hcat (punctuate (text ", ") (map pp es)))
-  pp (Block _ es _) =
-    braces (vcat (map pp es))
-  pp (RecordInitializer _ _ fields) =
-    braces (hcat (punctuate (text ", ") (map pp fields)))
-  pp (RecordFieldAccess _ expr name _) =
-    pp expr <> text "." <> pp name
-  pp (PackageMemberAccess _ pkgAlias name _) =
-    pp pkgAlias <> text "." <> pp name
+  pretty (Symbol _ i _) = pretty i
+  pretty (Subscript _ s i _) = pretty s <> text "[" <> pretty i <> text "]"
+  pretty (Subslice _ s r _) = pretty s <> pretty r
+  pretty (UnaryOp _ op e _) = pretty op <+> pretty e
+  pretty (BinaryOp _ op e1 e2 _) = parens (pretty e1 <+> pretty op <+> pretty e2)
+  pretty (Application _ f a _) = pretty f <> text "(" <> pretty a <> text ")"
+  pretty (NoArgApplication _ f _) = pretty f <> text "()"
+  pretty (ForeignFnApplication _ f as _) = pretty f <> commaSepParens as
+  pretty (Fn _ n b _) = parens (parens (pretty n) <+> rArr <+> pretty b)
+  pretty (NoArgFn _ b _) = parens empty <+> rArr <+> pretty b
+  pretty (Let _ n e b _) =
+    text "let" <+> pretty n <+> equals <+> pretty e <+> text "in" <+> pretty b
+  pretty (Literal _ (Int n) _) = integer n
+  pretty (Literal _ (Bool True) _) = text "true"
+  pretty (Literal _ (Bool False) _) = text "false"
+  pretty (Literal _ (String s) _) = text (show s)
+  pretty (Literal _ Unit{} _) = text "()"
+  pretty (Tuple _ f s r _) = commaSepParens (f:s:r)
+  pretty (If _ c t e _) =
+    text "if" <+> pretty c <+> text "then" <+> pretty t <+> text "else" <+> pretty e
+  pretty (Slice _ es _) =
+    text "[]" <> braces (hcat (punctuate (text ", ") (map pretty es)))
+  pretty (Block _ es _) =
+    braces (vcat (map pretty es))
+  pretty (RecordInitializer _ _ fields) =
+    braces (hcat (punctuate (text ", ") (map pretty fields)))
+  pretty (RecordFieldAccess _ expr name _) =
+    pretty expr <> text "." <> pretty name
+  pretty (PackageMemberAccess _ pkgAlias name _) =
+    pretty pkgAlias <> text "." <> pretty name
 
 instance Pretty r => Pretty (Range r) where
-  pp (Range e1 e2) = brackets $ pp e1 <+> text ":" <+> pp e2
-  pp (RangeTo e) = brackets $ text ":" <+> pp e
-  pp (RangeFrom e) = brackets $ pp e <+> text ":"
+  pretty (Range e1 e2) = brackets $ pretty e1 <+> text ":" <+> pretty e2
+  pretty (RangeTo e) = brackets $ text ":" <+> pretty e
+  pretty (RangeFrom e) = brackets $ pretty e <+> text ":"
 
 instance Pretty CanonicalExpr where
-  pp (scheme, expr) = pp expr <+> text ":" <+> pp scheme
+  pretty (scheme, expr) = pretty expr <+> text ":" <+> pretty scheme
 
 instance Pretty Definition where
-  pp (Definition _ name (scheme, expr)) =
-    pp name <+> text ":" <+> pp scheme $+$
-    pp name <+> text "=" <+> pp expr
-  pp (ForeignDefinition _ name scheme) =
-    text "// (foreign)" $+$
-    text "//" <+> pp name <+> text ":" <+> pp scheme
-  pp (TypeDefinition _ name _ type') =
-    text "type" <+> pp name <+> equals <+> pp type'
+  pretty (Definition _ name (scheme, expr)) = vcat [
+      pretty name <+> text ":" <+> pretty scheme,
+      pretty name <+> text "=" <+> pretty expr
+    ]
+  pretty (ForeignDefinition _ name scheme) = vcat [
+      text "// (foreign)",
+      text "//" <+> pretty name <+> text ":" <+> pretty scheme
+    ]
+  pretty (TypeDefinition _ name _ type') =
+    text "type" <+> pretty name <+> equals <+> pretty type'
 
 instance Pretty PackageName where
-  pp parts = hcat (punctuate (text "/") (map text parts))
+  pretty parts = hcat (punctuate (text "/") (map text parts))
 
 instance Pretty PackageDeclaration where
-  pp (PackageDeclaration _ name) = text "package" <+> pp name
+  pretty (PackageDeclaration _ name) = text "package" <+> pretty name
 
 instance Pretty ImportedPackage where
-  pp (ImportedPackage _ _ (Package (PackageDeclaration _ pkgName) _ _)) =
-    text "import" <+> pp pkgName
+  pretty (ImportedPackage _ _ (Package (PackageDeclaration _ pkgName) _ _)) =
+    text "import" <+> pretty pkgName
 
 instance Pretty Package where
-  pp (Package decl imports defs) =
-    pp decl $+$
-    vcat (map pp imports) $+$
-    vcat (map pp defs)
+  pretty (Package decl imports defs) =
+    vcat (pretty decl : map pretty imports ++ map pretty defs)
 
 instance Pretty Poly.TVar where
-  pp (Poly.TV s) = text s
+  pretty (Poly.TV s) = text s
 
 instance Pretty Poly.TVarBinding where
-  pp (Poly.TVarBinding _ v) = pp v
+  pretty (Poly.TVarBinding _ v) = pretty v
 
 instance Pretty QualifiedName where
-  pp (FQN pkg identifier) = hcat (punctuate (text ".") (map text pkg ++ [pp identifier]))
+  pretty (FQN pkg identifier) = hcat (punctuate (text ".") (map text pkg ++ [pretty identifier]))
 
 instance Pretty Poly.Type where
-  pp (Poly.TTuple _ f s r) = commaSepParens (f:s:r)
-  pp (Poly.TVar _ v) = pp v
-  pp (Poly.TCon _ (FQN [] (Identifier "unit"))) = text "()"
-  pp (Poly.TCon _ n) = pp n
-  pp (Poly.TNoArgFn _ t) = rArr <+> pp t
-  pp (Poly.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (Poly.TForeignFn _ _ ps rs) = text "<foreign>" <+> hsep (intersperse (text "&") (map pp ps)) <+> rArr <+> ppReturns rs
-  pp (Poly.TSlice _ t) =
-    text "[]" <> braces (pp t)
-  pp (Poly.TNamed _ n _) = pp n
-  pp (Poly.TRecord _ r) = braces (ppFields r)
-  pp Poly.REmpty{} = braces empty
-  pp r@Poly.RExtension{} = parens (ppFields r)
+  pretty (Poly.TTuple _ f s r) = commaSepParens (f:s:r)
+  pretty (Poly.TVar _ v) = pretty v
+  pretty (Poly.TCon _ (FQN [] (Identifier "unit"))) = text "()"
+  pretty (Poly.TCon _ n) = pretty n
+  pretty (Poly.TNoArgFn _ t) = rArr <+> pretty t
+  pretty (Poly.TFn _ tf ta) = pretty tf <+> rArr <+> pretty ta
+  pretty (Poly.TForeignFn _ _ ps rs) = text "<foreign>" <+> hsep (intersperse (text "&") (map pretty ps)) <+> rArr <+> ppReturns rs
+  pretty (Poly.TSlice _ t) =
+    text "[]" <> braces (pretty t)
+  pretty (Poly.TNamed _ n _) = pretty n
+  pretty (Poly.TRecord _ r) = braces (ppFields r)
+  pretty Poly.REmpty{} = braces empty
+  pretty r@Poly.RExtension{} = parens (ppFields r)
 
 ppFields :: Poly.Type -> Doc
 ppFields r =
   case Poly.getLeafRow r of
-    var@Poly.TVar{} -> printFields r <+> text "|" <+> pp var
+    var@Poly.TVar{} -> printFields r <+> text "|" <+> pretty var
     _ -> printFields r
   where
   printFields = hcat . punctuate (text ", ") . map printField . Poly.rowToList
-  printField (label, type') = pp label <> colon <+> pp type'
+  printField (label, type') = pretty label <> colon <+> pretty type'
 
 instance Pretty Poly.Scheme where
-  pp (Poly.Forall _ [] t) = pp t
-  pp (Poly.Forall _ vs t) = text "forall" <+> hsep (map pp vs) <> text "." <+> pp t
+  pretty (Poly.Forall _ [] t) = pretty t
+  pretty (Poly.Forall _ vs t) = text "forall" <+> hsep (map pretty vs) <> text "." <+> pretty t
 
 ppMonoFields :: Mono.Type -> Doc
 ppMonoFields Mono.REmpty{} = empty
 ppMonoFields r = getPairs r
   where
   getPairs (Mono.RExtension _ label type' Mono.REmpty{}) =
-    pp label <> colon <+> pp type'
+    pretty label <> colon <+> pretty type'
   getPairs (Mono.RExtension _ label type' row) =
-    pp label <> colon <+> pp type' <> comma <+> getPairs row
+    pretty label <> colon <+> pretty type' <> comma <+> getPairs row
   getPairs _ = empty
 
 ppReturns :: Pretty p => [p] -> Doc
-ppReturns [r] = pp r
+ppReturns [r] = pretty r
 ppReturns rs = commaSepParens rs
 
 instance Pretty Mono.Type where
-  pp (Mono.TTuple _ f s r) =
-    brackets (hcat (punctuate (text ", ") (map pp (f:s:r))))
-  pp (Mono.TCon _ (FQN [] (Identifier "unit"))) = text "()"
-  pp (Mono.TCon _ n) = pp n
-  pp (Mono.TNoArgFn _ t) = rArr <+> pp t
-  pp (Mono.TFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (Mono.TForeignFn _ _ ps rs) = text "<foreign>" <+> hsep (intersperse (text "&") (map pp ps)) <+> rArr <+> ppReturns rs
-  pp (Mono.TSlice _ t) =
-    text "[]" <> braces (pp t)
-  pp (Mono.TNamed _ n _) = pp n
-  pp (Mono.TRecord _ r) = braces (ppMonoFields r)
-  pp Mono.REmpty{} = braces empty
-  pp r@Mono.RExtension{} = parens (ppMonoFields r)
+  pretty (Mono.TTuple _ f s r) =
+    brackets (hcat (punctuate (text ", ") (map pretty (f:s:r))))
+  pretty (Mono.TCon _ (FQN [] (Identifier "unit"))) = text "()"
+  pretty (Mono.TCon _ n) = pretty n
+  pretty (Mono.TNoArgFn _ t) = rArr <+> pretty t
+  pretty (Mono.TFn _ tf ta) = pretty tf <+> rArr <+> pretty ta
+  pretty (Mono.TForeignFn _ _ ps rs) = text "<foreign>" <+> hsep (intersperse (text "&") (map pretty ps)) <+> rArr <+> ppReturns rs
+  pretty (Mono.TSlice _ t) =
+    text "[]" <> braces (pretty t)
+  pretty (Mono.TNamed _ n _) = pretty n
+  pretty (Mono.TRecord _ r) = braces (ppMonoFields r)
+  pretty Mono.REmpty{} = braces empty
+  pretty r@Mono.RExtension{} = parens (ppMonoFields r)
 
 instance Pretty (SignatureVarBinding a) where
-  pp (SignatureVarBinding _ s) = pp s
+  pretty (SignatureVarBinding _ s) = pretty s
 
 instance Pretty (SignatureExpr a) where
-  pp (TSUnit _) = text "()"
-  pp (TSSymbol _ i) = pp i
-  pp (TSApp _ d r) = pp d <> parens (pp r)
-  pp (TSNoArgFn _ t) = rArr <+> pp t
-  pp (TSFn _ tf ta) = pp tf <+> rArr <+> pp ta
-  pp (TSTuple _ f s r) =
-    brackets (hcat (punctuate (text ", ") (map pp (f:s:r))))
-  pp (TSSlice _ t) =
-    text "!" <> braces (pp t)
-  pp (TSRowEmpty _) = empty
-  pp (TSRowExtension _ label type' TSRowEmpty{}) = pp label <> colon <+> pp type'
-  pp (TSRowExtension _ label type' row) = pp label <> colon <+> pp type' <> comma <+> pp row
+  pretty (TSUnit _) = text "()"
+  pretty (TSSymbol _ i) = pretty i
+  pretty (TSApp _ d r) = pretty d <> parens (pretty r)
+  pretty (TSNoArgFn _ t) = rArr <+> pretty t
+  pretty (TSFn _ tf ta) = pretty tf <+> rArr <+> pretty ta
+  pretty (TSTuple _ f s r) =
+    brackets (hcat (punctuate (text ", ") (map pretty (f:s:r))))
+  pretty (TSSlice _ t) =
+    text "!" <> braces (pretty t)
+  pretty (TSRowEmpty _) = empty
+  pretty (TSRowExtension _ label type' TSRowEmpty{}) = pretty label <> colon <+> pretty type'
+  pretty (TSRowExtension _ label type' row) = pretty label <> colon <+> pretty type' <> comma <+> pretty row
   -- TODO: Better printing with braces
-  pp (TSRecord _ row) = text "record " <> pp row
+  pretty (TSRecord _ row) = text "record " <> pretty row
 
 instance Pretty (TypeSignature a) where
-  pp (TypeSignature _ [] expr) = pp expr
-  pp (TypeSignature _ vars expr) =
-    text "forall" <+> hsep (map pp vars) <> text "." <+> pp expr
+  pretty (TypeSignature _ [] expr) = pretty expr
+  pretty (TypeSignature _ vars expr) =
+    text "forall" <+> hsep (map pretty vars) <> text "." <+> pretty expr
 
 instance Pretty InstantiatedDefinition where
-  pp (InstantiatedDefinition polyName _si name expr) =
-    text "//" <+> pp polyName $+$
-    pp name <+> text ":" <+> pp (typeOf expr) $+$
-    pp name <+> text "=" <+> pp expr
+  pretty (InstantiatedDefinition polyName _si name expr) = vcat [
+      text "//" <+> pretty polyName,
+      pretty name <+> text ":" <+> pretty (typeOf expr),
+      pretty name <+> text "=" <+> pretty expr
+    ]
 
 instance Pretty MonomorphedDefinition where
-  pp (MonomorphedDefinition _ name _ expr) =
-    pp name <+> text ":" <+> pp (typeOf expr) $+$
-    pp name <+> text "=" <+> pp expr
+  pretty (MonomorphedDefinition _ name _ expr) = vcat [
+      pretty name <+> text ":" <+> pretty (typeOf expr),
+      pretty name <+> text "=" <+> pretty expr
+    ]
 
 instance Pretty MonomorphedPackage where
-  pp (MonomorphedPackage decl imports is ms) =
-    pp decl $+$
-    vcat (map pp imports) $+$
-    vcat (map pp $ toList is) $+$
-    vcat (map pp $ toList ms)
+  pretty (MonomorphedPackage decl imports is ms) =
+    vcat (pretty decl
+          : (map pretty imports)
+          ++ (map pretty $ toList is)
+          ++ (map pretty $ toList ms))

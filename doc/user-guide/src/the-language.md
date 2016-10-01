@@ -56,7 +56,8 @@ denoted by a name, an equals sign, and the expression to bind the name to.
 The following program imports the `strconv` package from Go, defines a
 function `shout` and a value `result`, and defines the *main* function, the
 entry point of the program. The main function must be a function taking
-no argument and returning `()`, i.e. have the type `(-> ())`.
+no argument and returning `()`, i.e. have the type `(-> ())`. It must also be
+defined in the *main* package.
 
 ```{.oden .playground-runnable language=oden include=src/listings/package-example.oden}
 ```

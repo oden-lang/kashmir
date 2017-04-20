@@ -10,16 +10,19 @@ import           Oden.Core.ProtocolImplementation
 import           Oden.Core.Traversal
 
 import           Oden.Identifier
+import           Oden.Metadata
 import           Oden.QualifiedName        (PackageName(..), QualifiedName (..), nameInUniverse)
 import           Oden.SourceInfo
 import           Oden.Type.Polymorphic
 
 import           Oden.Compiler.LiteralEval
 
+import           Control.Monad
 import           Control.Monad.RWS
 import           Control.Monad.Except
 
 import qualified Data.Set                  as Set
+import           Data.List
 
 data ValidationError
   = ValueDiscarded TypedExpr
@@ -27,6 +30,8 @@ data ValidationError
   | NegativeSliceIndex TypedExpr
   | InvalidSubslice SourceInfo TypedRange
   | UnusedImport SourceInfo PackageName Identifier
+  | MainPkgDoesNotHaveMainFn SourceInfo
+  | MainPkgDoesNotHaveValidMainFn SourceInfo
   deriving (Show, Eq, Ord)
 
 data ValidationWarning = ValidationWarning -- There's no warnings defined yet.
@@ -108,6 +113,19 @@ validateExpr = void . traverseExpr identityTraversal { onExpr = onExpr'
       Unresolved protocol method _ -> protocol == divisionName && method == divideName
       Resolved protocol method _ -> protocol == divisionName && method == divideName
 
+
+validateMainPkg :: PackageDeclaration -> [TypedDefinition] -> Validate ()
+validateMainPkg (PackageDeclaration si _) defs = case find isMainFn defs of
+    Just (Definition _ _ (_, NoArgFn _ _ (TNoArgFn _ (TCon _ (FQN (NativePackageName []) (Identifier "unit")))))) -> return ()
+    Just def -> throwError . MainPkgDoesNotHaveValidMainFn . getSourceInfo $ def
+    Nothing -> throwError . MainPkgDoesNotHaveMainFn . unwrap $ si
+    where
+    isMainFn =
+      \case
+        Definition _ (FQN _ (Identifier "main")) _ -> True
+        _ -> False
+
+
 repeated :: [(Identifier, Type)] -> [(Identifier, Type)]
 repeated fields = snd (foldl check (Set.empty, []) fields)
   where
@@ -115,11 +133,13 @@ repeated fields = snd (foldl check (Set.empty, []) fields)
     | n `Set.member` names = (names, fields'++ [f])
     | otherwise            = (Set.insert n names, fields')
 
+
 validatePackage :: TypedPackage -> Validate ()
-validatePackage (TypedPackage _ imports definitions) = do
+validatePackage (TypedPackage pkgDecl imports definitions) = do
   -- Validates all definitions and expressions recursively. Also collects usage
   -- of imported packages.
   validateDefs definitions
+  when isMainPkg $ validateMainPkg pkgDecl definitions
   -- When package usage is collected we can validate the imports.
   mapM_ validateImport imports
   where
@@ -140,6 +160,7 @@ validatePackage (TypedPackage _ imports definitions) = do
           validateExpr expr
       _ : defs -> validateDefs defs
       [] -> return ()
+  isMainPkg = packageDeclarationName pkgDecl == NativePackageName ["main"]
 
 validate :: TypedPackage -> Either ValidationError [ValidationWarning]
 validate pkg =
